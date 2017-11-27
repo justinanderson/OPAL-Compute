@@ -13,7 +13,7 @@ To do so, the eae-compute service exposes a REST interface.
 We provide the [API documentation](doc-api-swagger.yml) in swagger 2.0 format. You can paste the content in the [swagger editor](http://editor.swagger.io/) to render the API documentation.
 
 ## Configuration
-At its construction, the `eaeCompute` server receives a configuration object that MUST respect the following schema:
+At its construction, the `opalCompute` server receives a configuration object that MUST respect the following schema:
  * [Example configuration](config/eae.compute.sample.config.js)
  * [Tests configuration](config/eae.compute.test.config.js)
  
