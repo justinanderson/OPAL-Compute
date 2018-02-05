@@ -1,6 +1,6 @@
 # OPAL-Compute
 [![Bratwursts](https://img.shields.io/badge/made-with_Bratwursts-bfaf13.svg?style=flat-square)](https://www.opalproject.org)
-[![Travis](https://img.shields.io/travis/opal-project/opal-Compute/master.svg?style=flat-square)](https://travis-ci.org/OPAL-Project/OPAL-Compute) 
+[![Travis](https://travis-ci.org/OPAL-Project/OPAL-Compute.svg?branch=master)](https://travis-ci.org/OPAL-Project/OPAL-Compute) 
 [![David](https://img.shields.io/david/opal-project/opal-Compute.svg?style=flat-square)](https://david-dm.org/OPAL-Project/opal-compute) 
 [![David](https://img.shields.io/david/dev/opal-project/opal-Compute.svg?style=flat-square)](https://david-dm.org/OPAL-Project/opal-compute?type=dev) 
 
