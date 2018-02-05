@@ -1,15 +1,15 @@
 {
-  "name": "eae-compute",
+  "name": "opal-compute",
   "version": "0.0.1",
-  "description": "EAE - Compute micro-service",
-  "main": "./src/eaeCompute.js",
+  "description": "OPAL - Compute micro-service",
+  "main": "./src/opalCompute.js",
   "scripts": {
     "start": "node ./src/index.js",
     "lint": "eslint src",
     "test": "jest --runInBand --verbose --useStderr"
   },
   "keywords": [
-    "eae",
+    "opal",
     "compute"
   ],
   "contributors": [
@@ -21,12 +21,12 @@
   "readme": "README.md",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dsi-icl/eae-compute.git"
+    "url": "git+https://github.com/opal-project/opal-compute.git"
   },
   "bugs": {
-    "url": "https://github.com/dsi-icl/eae-compute/issues"
+    "url": "https://github.com/opal-project/opal-compute/issues"
   },
-  "homepage": "https://github.com/dsi-icl/eae-compute#readme",
+  "homepage": "https://github.com/opal-project/opal-compute#readme",
   "devDependencies": {
     "babel-core": "6.25.0",
     "babel-eslint": "7.2.3",

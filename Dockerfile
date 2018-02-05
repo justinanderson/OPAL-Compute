@@ -16,7 +16,7 @@ RUN cat /root/.npm/_logs/*; exit 0;
 
 # Bundle app
 COPY ./src /usr/app/src
-COPY ./config/eae.compute.config.js /usr/app/config/eae.compute.config.js
+COPY ./config/opal.compute.config.js /usr/app/config/opal.compute.config.js
 
 # Run compute service
 EXPOSE 80

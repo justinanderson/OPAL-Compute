@@ -15,7 +15,7 @@ WORKDIR /usr/app
 
 # Install app dependencies
 COPY ./package.json /usr/app/
-# Install eae-compute npm dependencies
+# Install opal-compute npm dependencies
 RUN npm install --silent; exit 0;
 RUN cat /root/.npm/_logs/*; exit 0;
 
@@ -24,6 +24,6 @@ COPY ./src /usr/app/src
 COPY ./.eslintrc /usr/app/.eslintrc
 COPY ./test/*.js /usr/app/test/
 COPY ./test/jobs /usr/app/test/jobs
-COPY ./config/eae.compute.test.config.js /usr/app/config/eae.compute.config.js
+COPY ./config/opal.compute.test.config.js /usr/app/config/opal.compute.config.js
 
 EXPOSE 80

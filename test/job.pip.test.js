@@ -1,6 +1,6 @@
 const request = require('request');
 const eaeutils = require('eae-utils');
-let config = require('../config/eae.compute.config.js');
+let config = require('../config/opal.compute.config.js');
 let TestServer = require('./testserver.js');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000; // 20 seconds

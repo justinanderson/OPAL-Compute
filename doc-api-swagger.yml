@@ -1,11 +1,11 @@
 swagger: '2.0'
 info:
   version: 0.0.1
-  title: Eae-compute
+  title: OPAL-compute
   license:
     name: MIT
-    url: https://github.com/dsi-icl/eae-compute/blob/master/LICENSE
-  description:  eAE Compute
+    url: https://github.com/opal-project/opal-compute/blob/master/LICENSE
+  description:  OPAL Compute
 
 paths:
   /status:

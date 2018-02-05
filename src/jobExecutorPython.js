@@ -20,9 +20,9 @@ function JobExecutorPython(jobID, jobCollection, jobModel) {
 
     // Init member attributes
     this._swift = new SwiftHelper({
-        url: global.eae_compute_config.swiftURL,
-        username: global.eae_compute_config.swiftUsername,
-        password: global.eae_compute_config.swiftPassword
+        url: global.opal_compute_config.swiftURL,
+        username: global.opal_compute_config.swiftUsername,
+        password: global.opal_compute_config.swiftPassword
     });
     this._tmpDirectory = null;
 

@@ -2,14 +2,14 @@ let express = require('express');
 let os = require('os');
 let app = express();
 
-let config = require('../config/eae.compute.config.js');
-let EaeCompute = require('./eaeCompute.js');
+let config = require('../config/opal.compute.config.js');
+let OpalCompute = require('./opalCompute.js');
 
 //Remove unwanted express headers
 app.set('x-powered-by', false);
 
 let options = Object.assign({}, config);
-let compute = new EaeCompute(options);
+let compute = new OpalCompute(options);
 
 compute.start().then(function(compute_router) {
     app.use(compute_router);

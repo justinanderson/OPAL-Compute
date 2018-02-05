@@ -9,20 +9,20 @@ const StatusController = require('./statusController.js');
 const JobController = require('./jobController.js');
 
 
-function EaeCompute(config) {
+function OpalCompute(config) {
     // Init member attributes
     this.config = config;
     this.app = express();
-    global.eae_compute_config = config;
+    global.opal_compute_config = config;
 
     // Bind public member functions
-    this.start = EaeCompute.prototype.start.bind(this);
-    this.stop = EaeCompute.prototype.stop.bind(this);
+    this.start = OpalCompute.prototype.start.bind(this);
+    this.stop = OpalCompute.prototype.stop.bind(this);
 
     // Bind private member functions
-    this._connectDb = EaeCompute.prototype._connectDb.bind(this);
-    this._setupStatusController = EaeCompute.prototype._setupStatusController.bind(this);
-    this._setupJobController = EaeCompute.prototype._setupJobController.bind(this);
+    this._connectDb = OpalCompute.prototype._connectDb.bind(this);
+    this._setupStatusController = OpalCompute.prototype._setupStatusController.bind(this);
+    this._setupJobController = OpalCompute.prototype._setupJobController.bind(this);
 
 
     // Remove unwanted express headers
@@ -43,11 +43,11 @@ function EaeCompute(config) {
 
 /**
  * @fn start
- * @desc Starts the eae compute service
+ * @desc Starts the opal compute service
  * @return {Promise} Resolves to a Express.js Application router on success,
  * rejects an error stack otherwise
  */
-EaeCompute.prototype.start = function() {
+OpalCompute.prototype.start = function() {
     let _this = this;
     return new Promise(function (resolve, reject) {
         _this._connectDb().then(function () {
@@ -67,11 +67,11 @@ EaeCompute.prototype.start = function() {
 
 /**
  * @fn stop
- * @desc Stop the eae compute service
+ * @desc Stop the opal compute service
  * @return {Promise} Resolves to true on success,
  * rejects an error stack otherwise
  */
-EaeCompute.prototype.stop = function() {
+OpalCompute.prototype.stop = function() {
     let _this = this;
     return new Promise(function (resolve, reject) {
         // Stop status update
@@ -92,7 +92,7 @@ EaeCompute.prototype.stop = function() {
  * @return {Promise} Resolves to true on success
  * @private
  */
-EaeCompute.prototype._connectDb = function () {
+OpalCompute.prototype._connectDb = function () {
     let _this = this;
     return new Promise(function (resolve, reject) {
         mongodb.connect(_this.config.mongoURL, function (err, db) {
@@ -110,16 +110,16 @@ EaeCompute.prototype._connectDb = function () {
  * @fn _setupStatusController
  * @desc Initialize status service routes and controller
  */
-EaeCompute.prototype._setupStatusController = function () {
+OpalCompute.prototype._setupStatusController = function () {
     let _this = this;
 
     let statusOpts = {
         version: package_json.version,
-        clusters: global.eae_compute_config.clusters
+        clusters: global.opal_compute_config.clusters
     };
-    _this.status_helper = new StatusHelper(Constants.EAE_SERVICE_TYPE_COMPUTE, global.eae_compute_config.port, null, statusOpts);
+    _this.status_helper = new StatusHelper(Constants.EAE_SERVICE_TYPE_COMPUTE, global.opal_compute_config.port, null, statusOpts);
     _this.status_helper.setCollection(_this.db.collection(Constants.EAE_COLLECTION_STATUS));
-    _this.status_helper.setComputeType(global.eae_compute_config.computeType);
+    _this.status_helper.setComputeType(global.opal_compute_config.computeType);
 
     _this.statusController = new StatusController(_this.status_helper);
     _this.app.get('/status', _this.statusController.getStatus); // GET status
@@ -130,7 +130,7 @@ EaeCompute.prototype._setupStatusController = function () {
  * @fn _setupJobController
  * @desc Initialize job execution service routes and controller
  */
-EaeCompute.prototype._setupJobController = function () {
+OpalCompute.prototype._setupJobController = function () {
     let _this = this;
 
     _this.jobController = new JobController(_this.db.collection(Constants.EAE_COLLECTION_JOBS), _this.status_helper);
@@ -138,4 +138,4 @@ EaeCompute.prototype._setupJobController = function () {
     _this.app.post('/cancel', _this.jobController.cancelJob); // POST cancel current job
 };
 
-module.exports = EaeCompute;
+module.exports = OpalCompute;

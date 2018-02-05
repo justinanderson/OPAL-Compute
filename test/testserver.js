@@ -1,6 +1,6 @@
 let express = require('express');
-let EaeCompute = require('../src/eaeCompute.js');
-let config = require('../config/eae.compute.config.js');
+let OpalCompute = require('../src/opalCompute');
+let config = require('../config/opal.compute.config.js');
 let ObjectID = require('mongodb').ObjectID;
 const fs = require('fs');
 const path = require('path');
@@ -30,11 +30,11 @@ TestServer.prototype.run = function() {
         // Setup node env to test during test
         process.env.TEST = 1;
 
-        // Create eae compute server
-        _this.eae_compute = new EaeCompute(config);
+        // Create opal.compute server
+        _this.opal_compute = new OpalCompute(config);
 
         // Start server
-        _this.eae_compute.start().then(function (compute_router) {
+        _this.opal_compute.start().then(function (compute_router) {
             _this._app.use(compute_router);
             _this._server = _this._app.listen(config.port, function (error) {
                 if (error)
@@ -55,7 +55,7 @@ TestServer.prototype.stop = function() {
         // Remove test flag from env
         delete process.env.TEST;
 
-        _this.eae_compute.stop().then(function() {
+        _this.opal_compute.stop().then(function() {
             _this._server.close(function(error) {
                     if (error)
                         reject(error);
@@ -91,7 +91,7 @@ TestServer.prototype.createJob = function(type, mainScript, params, inputFiles =
             }
         );
         // Insert in DB
-        _this.eae_compute.jobController._jobCollection.insertOne(job_model).then(function() {
+        _this.opal_compute.jobController._jobCollection.insertOne(job_model).then(function() {
             // Upload files
             let upload_promises = [];
             // Create this job input container
@@ -144,7 +144,7 @@ TestServer.prototype.deleteJob = function(job_model) {
             // Wait for all containers delete
             Promise.all([_this._swift.deleteContainer(input_container), _this._swift.deleteContainer(output_container)]).then(function() {
                 // Remove from DB
-                _this.eae_compute.jobController._jobCollection.deleteOne({_id : job_model._id}).then(function() {
+                _this.opal_compute.jobController._jobCollection.deleteOne({_id : job_model._id}).then(function() {
                     resolve(true);
                 }, function(error) {
                     reject(error);

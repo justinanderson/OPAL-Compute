@@ -8,10 +8,10 @@ RUN apt-get update -q && apt-get upgrade -y --no-install-recommends
 RUN mkdir -p /usr/app/config
 WORKDIR /root
 
-# We download the eae compute
-RUN git clone -b master https://github.com/dsi-icl/eae-compute
+# We download the opal compute
+RUN git clone -b master https://github.com/opal-project/opal-compute
 
-WORKDIR /root/eae-compute
+WORKDIR /root/opal-compute
 
 # Bundle app
 RUN cp package.json /usr/app/ \
@@ -19,7 +19,7 @@ RUN cp package.json /usr/app/ \
 
 WORKDIR /usr/app
 
-# Install eae-compute npm dependencies
+# Install opal-compute npm dependencies
 RUN npm install --silent; exit 0;
 RUN cat /root/.npm/_logs/*; exit 0;
 
