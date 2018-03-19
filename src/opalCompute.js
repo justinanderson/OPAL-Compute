@@ -98,10 +98,10 @@ OpalCompute.prototype._connectDb = function () {
         mongodb.connect(_this.config.mongoURL, function (err, db) {
             if (err !== null && err !== undefined) {
                 reject(ErrorHelper('Failed to connect to mongoDB', err));
-                return;
+            } else {
+                _this.db = db;
+                resolve(true);
             }
-            _this.db = db;
-            resolve(true);
         });
     });
 };

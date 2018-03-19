@@ -17,13 +17,6 @@ const { SwiftHelper, ErrorHelper } = require('eae-utils');
  */
 function JobExecutorPython(jobID, jobCollection, jobModel) {
     JobExecutorAbstract.call(this, jobID, jobCollection, jobModel);
-
-    // Init member attributes
-    this._swift = new SwiftHelper({
-        url: global.opal_compute_config.swiftURL,
-        username: global.opal_compute_config.swiftUsername,
-        password: global.opal_compute_config.swiftPassword
-    });
     this._tmpDirectory = null;
 
     // Bind member functions
@@ -47,49 +40,13 @@ JobExecutorPython.prototype._preExecution = function() {
     let _this = this;
 
     return new Promise(function (resolve, reject) {
-        // Compute input container name
-        let container_name = _this._jobID.toString() + '_input';
-        // Create input directory
-        fs.mkdirSync(path.join(_this._tmpDirectory, 'input'));
-        let file_transfer_promises = [];
-
-        // Download each input file in the model from the swift store
-        _this._model.input.forEach(function(file) {
-            // Store the file in the input subdirectory
-            let tmpDestination = path.join(_this._tmpDirectory, 'input', file);
-
-            // Get download stream
-            let p = _this._swift.getFileReadStream(container_name, file).then(function(rs) {
-                let ws = fs.createWriteStream(tmpDestination); // Open file descriptor
-                rs.pipe(ws); //Pipe received data to be written in the file
-
-                // Listen to then end of the file transfer
-                resolve(new Promise(function(file_resolve, file_reject) {
-                    rs.on('end', function() {
-                        file_resolve(true);
-                    });
-                    rs.on('error', function(error) {
-                        file_reject(ErrorHelper('Downloading ' + file + ' failed', error));
-                    });
-                }));
-            }, function(error) {
-                reject(ErrorHelper('Downloading ' + file + ' has error', error));
+        _this.fetchAlgorithm().then(
+            function (algorithm) {
+                fs.copyFileSync(path.join(__dirname, 'baseFiles/main.py'), path.join(_this._tmpDirectory, 'main.py'));
+                resolve(algorithm);
+            }, function (error) {
+                reject(error);
             });
-
-            // Push the file transfer promise into array
-            file_transfer_promises.push(p);
-        });
-
-        //Wait for all files to be transferred
-        Promise.all(file_transfer_promises).then(function(__unused__ok_array) {
-            //Create output directory if doesnt exists
-            if (fs.existsSync(path.join(_this._tmpDirectory, 'input', 'output')) === false) {
-                fs.mkdirSync(path.join(_this._tmpDirectory, 'input', 'output'));
-            }
-            resolve(true); // All good
-        }, function(error) {
-            reject(ErrorHelper('Input download failed', error));
-        });
     });
 };
 
@@ -101,54 +58,9 @@ JobExecutorPython.prototype._preExecution = function() {
  * @pure
  */
 JobExecutorPython.prototype._postExecution = function() {
-    let _this = this;
-    return new Promise(function (resolve, reject) {
-        let container_name = _this._jobID.toString() + '_output';
-        let tmpSource = path.join(_this._tmpDirectory, 'input','output');
-        let upload_file_promises = [];
-
-        // Cleanup current output in model
-        _this._model.output = [];
-
-        // Create container
-        _this._swift.createContainer(container_name).then(function(__unused__ok) {
-
-            if (fs.existsSync(tmpSource) === false) {
-                resolve(true); // No outputs
-                return;
-            }
-
-            // List whats in the output directory
-            fs.readdir(tmpSource, function(error, files) {
-                if (error) {
-                    reject(ErrorHelper('Listing output files failed', error));
-                    return;
-                }
-
-                // Upload each file
-                files.forEach(function(file) {
-                    // Register file in output
-                    _this._model.output.push(file);
-
-                    let tmpFile = path.join(tmpSource, file);
-                    let rs = fs.createReadStream(tmpFile);
-
-                    // Upload file to swift container
-                    let p = _this._swift.createFile(container_name, file, rs);
-                    // Register uploading promise
-                    upload_file_promises.push(p);
-                });
-
-                // Wait for all uploads to complete
-                Promise.all(upload_file_promises).then(function(__unused__ok_array) {
-                    resolve(true); // All good
-                }, function(error) {
-                    reject(ErrorHelper('Uploading output files failed', error));
-                });
-            });
-        }, function(error) {
-            reject(ErrorHelper('Creating output container failed', error));
-        });
+    return new Promise(function (resolve) {
+        // TODO: Send request to Aggregation that execution is done.
+        resolve(true);
     });
 };
 
@@ -161,14 +73,8 @@ JobExecutorPython.prototype.startExecution = function(callback) {
     let _this = this;
 
     _this._callback = callback;
-    // Create tmp directory
-    fs.mkdtemp(os.tmpdir() + path.sep, function(error, directoryPath) {
-        if (error) {
-            callback(error);
-            return;
-        }
-        _this._tmpDirectory = directoryPath; //Save tmp dir
 
+    _this.fetchData().then(function (dataDir) {
         _this.fetchModel().then(function () {
             //Clean model for execution
             _this._model.stdout = '';
@@ -176,20 +82,24 @@ JobExecutorPython.prototype.startExecution = function(callback) {
             _this._model.status.unshift(Constants.EAE_JOB_STATUS_RUNNING);
             _this._model.startDate = new Date();
             _this.pushModel().then(function() {
-                let cmd = 'python ' + _this._model.main;
-                let args = _this._model.params;
+                let cmd = 'python';
+                let args = ['main.py --data_dir input --algorithm_json algorithm.json --params_json params.json'];
                 let opts = {
-                    cwd: _this._tmpDirectory + '/input',
+                    cwd: _this._tmpDirectory,
                     end: process.env,
                     shell: true
                 };
                 _this._exec(cmd, args, opts);
             }, function(error) {
-                throw error;
+                _this.handleExecutionError(error.toString());
             });
         }, function (error) {
-            callback(error);
+            let message = 'Error in fetching model ' + error.toString();
+            _this.handleExecutionError(message);
         });
+    }, function (error) {
+        let message = 'Error in fetching data - ' + error.toString();
+        _this.handleExecutionError(message);
     });
 };
 

@@ -45,15 +45,22 @@ JobController.prototype.runJob = function(req, res) {
     //Create executor based on type
     _this._jobExecFactory.createFromId(job_id, _this._jobCollection).then(function(executor) {
         _this._executor = executor;
-        //Trigger asynchronous execution
-        _this._executor.startExecution(function(__unused__error) {
-            //After exec, set the node to idle
+        // Trigger asynchronous execution
+        _this._executor.startExecution(function(error, execStatus) {
+            // After exec, set the node to idle
             _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_IDLE);
-            //Cleanup executor instance
+            // Cleanup executor instance
             delete _this._executor;
+
+            // Return status based on error.
+            if (error !== undefined && error !== null) {
+                res.status(500);
+                res.json(ErrorHelper('Error in execution', error));
+            } else {
+                res.status(200);
+                res.json(execStatus)
+            }
         });
-        res.status(200);
-        res.json({ ok: true, status: Constants.EAE_JOB_STATUS_RUNNING });
     }, function(error) {
         res.status(500);
         res.json(ErrorHelper('Execution aborted', error));
