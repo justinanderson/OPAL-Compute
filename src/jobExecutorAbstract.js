@@ -68,6 +68,11 @@ JobExecutorAbstract.prototype.handleExecutionError = function(message, status) {
 };
 
 
+/**
+ * @fn _cleanUp
+ * @desc Clean up the temporary directory created and child process if it exists.
+ * @private
+ */
 JobExecutorAbstract.prototype._cleanUp = function () {
     let _this = this;
 
@@ -76,11 +81,10 @@ JobExecutorAbstract.prototype._cleanUp = function () {
         delete _this._child_process;
     }
 
-    // TODO: Uncomment this.
-    // // Remove tmpDirectory if exists
-    // if (_this._tmpDirectory !== undefined && _this._tmpDirectory !== null) {
-    //     fse.removeSync(_this._tmpDirectory);
-    // }
+    // Remove tmpDirectory if exists
+    if (_this._tmpDirectory !== undefined && _this._tmpDirectory !== null) {
+        fse.removeSync(_this._tmpDirectory);
+    }
 };
 
 /**
@@ -96,24 +100,34 @@ JobExecutorAbstract.prototype.fetchData = function () {
         fs.mkdtemp(path.join(os.tmpdir(), 'opal-'), function (error, directoryPath) {
             if (error !== undefined && error !== null) {
                 reject(error);
-            }
-            _this._tmpDirectory = directoryPath; // Save tmp dir
-            _this._tmpDirectory = '/home/codejail/compute/temp/'; // TODO: Remove later
-            _this._dataDir = path.join(_this._tmpDirectory, 'input');
+            } else {
+                _this._tmpDirectory = directoryPath; // Save tmp dir
+                _this._tmpDirectory = '/home/codejail/compute/temp/'; // TODO: Remove later
+                _this._dataDir = path.join(_this._tmpDirectory, 'input');
 
-            _this._model.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
-            _this._dataFetcher.fetchDataFromServer(_this._model.params.startDate, _this._model.params.endDate, _this._dataDir).then(
-                function (dataDir) {
-                    resolve(dataDir);
-                }, function (error) {
-                    reject(error);
-                });
+                _this._model.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
+                _this.pushModel().then(
+                    function(){
+                        _this._dataFetcher.fetchDataFromServer(_this._model.params.startDate, _this._model.params.endDate, _this._dataDir).then(
+                            function (dataDir) {
+                                resolve(dataDir);
+                            }, function (error) {
+                                reject(error);
+                            });
+                    }, function (error) {
+                        _this.handleExecutionError(error);
+                    });
+            }
         });
     });
 };
 
 
-
+/**
+ * @fn fetchAlgorithm
+ * @desc Fetch algorithm from the AlgoService.
+ * @return {Promise<any>} Resolves to algorithm to be fetched, rejects with an error.
+ */
 JobExecutorAbstract.prototype.fetchAlgorithm = function () {
     let _this = this;
 
@@ -233,7 +247,11 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
         //Handle child termination
         _this._child_process.on('exit', function (code, signal) {
             if (code !== null) { // Successful run or interruption
-                end_fn(Constants.EAE_JOB_STATUS_DONE, code, 'Exit success');
+                if (code === 0){
+                    end_fn(Constants.EAE_JOB_STATUS_DONE, code, 'Exit success');
+                } else {
+                    _this.handleExecutionError('Error in execution');
+                }
             }
             else if (signal === 'SIGTERM') {
                 _this.handleExecutionError('Interrupt success', Constants.EAE_JOB_STATUS_CANCELLED);

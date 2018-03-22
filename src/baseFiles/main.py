@@ -1,4 +1,4 @@
-"""Test population density algorithm."""
+"""Main file to run algorithms."""
 from __future__ import division, print_function
 from opalalgorithms.utils import AlgorithmRunner
 import configargparse
@@ -19,12 +19,19 @@ parser.add_argument('--params_json', required=True,
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    with open(args.algorithm_json) as fp:
-        algorithm = json.loads(fp)
+    # read algorithm from json
+    with open(args.algorithm_json, 'r') as fp:
+        algorithm = json.load(fp)
 
-    with open(args.params_json) as fp:
-        params = json.loads(fp)
+    # read params from json
+    with open(args.params_json, 'r') as fp:
+        params = json.load(fp)
 
+    # use default sampling rate of 1 if not available
+    if 'sampling' not in params:
+        params['sampling'] = 1
+
+    # number of threads for computation is number of cores - 1
     number_of_threads = multiprocessing.cpu_count() - 1
     algorunner = AlgorithmRunner(
         algorithm, dev_mode=False, multiprocess=True, sandboxing=True)

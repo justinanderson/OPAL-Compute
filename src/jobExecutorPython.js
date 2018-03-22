@@ -2,6 +2,7 @@ const process = require('process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const fse = require('fs-extra');
 const {Constants} = require('eae-utils');
 
 const JobExecutorAbstract = require('./jobExecutorAbstract.js');
@@ -31,8 +32,8 @@ JobExecutorPython.prototype.constructor = JobExecutorPython;
 
 /**
  * @fn _preExecution
- * @desc Prepare jobs inputs and params
- * @return {Promise} Resolve to true on successful preparation
+ * @desc Fetch algorithm from, copy main file to temp directory and save algorithm and params as json in the directory.
+ * @return {Promise} Resolve to true on successful preparation, rejects with an error
  * @private
  * @pure
  */
@@ -43,7 +44,16 @@ JobExecutorPython.prototype._preExecution = function() {
         _this.fetchAlgorithm().then(
             function (algorithm) {
                 fs.copyFileSync(path.join(__dirname, 'baseFiles/main.py'), path.join(_this._tmpDirectory, 'main.py'));
-                resolve(algorithm);
+                fse.outputJson(path.join(_this._tmpDirectory, 'algorithm.json'), algorithm).then(function () {
+                    let model_params = (_this._model.params !== undefined && _this._model.params !== null) ? _this._model.params : {};
+                    fse.outputJson(path.join(_this._tmpDirectory, 'params.json'), model_params).then(function () {
+                        resolve(true);
+                    }, function (error) {
+                        reject(error);
+                    });
+                }, function (error) {
+                    reject(error);
+                });
             }, function (error) {
                 reject(error);
             });
@@ -67,20 +77,20 @@ JobExecutorPython.prototype._postExecution = function() {
 /**
  * @fn startExecution
  * @param callback {Function} Function called after execution. callback(error, status)
- * @desc Starts the execution of designated job.
+ * @desc Starts the execution of designated job. Fetch model, fetch data and push updated status before starting execution.
  */
 JobExecutorPython.prototype.startExecution = function(callback) {
     let _this = this;
 
     _this._callback = callback;
 
-    _this.fetchData().then(function (dataDir) {
-        _this.fetchModel().then(function () {
+    _this.fetchModel().then(function () {
+        _this._model.startDate = new Date();
+        _this.fetchData().then(function (dataDir) {
             //Clean model for execution
             _this._model.stdout = '';
             _this._model.stderr = '';
             _this._model.status.unshift(Constants.EAE_JOB_STATUS_RUNNING);
-            _this._model.startDate = new Date();
             _this.pushModel().then(function() {
                 let cmd = 'python';
                 let args = ['main.py --data_dir input --algorithm_json algorithm.json --params_json params.json'];
