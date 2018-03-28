@@ -10,10 +10,9 @@ services:
         ports:
             - 27017:27017
 
-    swift:
-        image: bouncestorage/swift-aio
-        ports:
-            - 8080:8080
+    algoservice:
+        image: aoehmich/opal-algoservice
+        ports: 8000:8000
 
     lb: # Load balancing
         image: dockercloud/haproxy

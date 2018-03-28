@@ -1,5 +1,5 @@
 # Select source image
-FROM node:wheezy
+FROM node:stretch
 
 # Install all dependencies
 RUN apt-get update

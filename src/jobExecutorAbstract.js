@@ -102,7 +102,6 @@ JobExecutorAbstract.prototype.fetchData = function () {
                 reject(error);
             } else {
                 _this._tmpDirectory = directoryPath; // Save tmp dir
-                _this._tmpDirectory = '/home/codejail/compute/temp/'; // TODO: Remove later
                 _this._dataDir = path.join(_this._tmpDirectory, 'input');
 
                 _this._model.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
