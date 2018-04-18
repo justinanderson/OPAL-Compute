@@ -42,7 +42,7 @@ JobController.prototype.runJob = function(req, res) {
     //Set the node to busy
     _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_BUSY);
 
-    //Create executor based on type
+    // Create executor based on type
     _this._jobExecFactory.createFromId(job_id, _this._jobCollection).then(function(executor) {
         _this._executor = executor;
         // Trigger asynchronous execution
@@ -58,13 +58,13 @@ JobController.prototype.runJob = function(req, res) {
                 res.json(ErrorHelper('Error in execution', error));
             } else {
                 res.status(200);
-                res.json(execStatus)
+                res.json(execStatus);
             }
         });
     }, function(error) {
+        delete _this._executor;
         res.status(500);
         res.json(ErrorHelper('Execution aborted', error));
-        delete _this._executor;
 
         // Set the node to idle
         _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_IDLE);

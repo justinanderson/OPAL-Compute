@@ -1,12 +1,11 @@
 const process = require('process');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 const fse = require('fs-extra');
 const {Constants} = require('eae-utils');
 
 const JobExecutorAbstract = require('./jobExecutorAbstract.js');
-const { SwiftHelper, ErrorHelper } = require('eae-utils');
+const { ErrorHelper } = require('eae-utils');
 
 /**
  * @class JobExecutorPython
@@ -49,7 +48,7 @@ JobExecutorPython.prototype._preExecution = function() {
                     fse.outputJson(path.join(_this._tmpDirectory, 'params.json'), model_params).then(function () {
                         resolve(true);
                     }, function (error) {
-                        reject(error);
+                        reject(ErrorHelper('Unable to save params', error));
                     });
                 }, function (error) {
                     reject(error);
@@ -86,7 +85,7 @@ JobExecutorPython.prototype.startExecution = function(callback) {
 
     _this.fetchModel().then(function () {
         _this._model.startDate = new Date();
-        _this.fetchData().then(function (dataDir) {
+        _this.fetchData().then(function (__unused__dataDir) {
             //Clean model for execution
             _this._model.stdout = '';
             _this._model.stderr = '';

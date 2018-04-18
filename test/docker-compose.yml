@@ -35,12 +35,8 @@ services:
             - mongodb
             - algoservice
         privileged: true
-        cap_add:
-            - sys_admin
         ports:
             - 80:80
-#        test command
-#        command: sh -c 'sudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python && mkdir /tmp/codejail-test/ && cp ./test/unlim.py /tmp/codejail-test/ && /usr/venv/sandbox/bin/python /tmp/codejail-test/unlim.py'
-        command: sh -c 'sudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python'
+#        command: sh -c 'mkdir /tmp/codejail-test/ && cp ./test/unlim.py /tmp/codejail-test/ && /usr/venv/sandbox/bin/python /tmp/codejail-test/unlim.py'
         security_opt:
             - apparmor:unconfined

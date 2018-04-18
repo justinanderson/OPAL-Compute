@@ -62,7 +62,7 @@ RUN useradd -ms /bin/bash opal
 USER opal
 
 COPY ./setupScripts/95-sandbox /etc/sudoers.d/
-RUN /usr/bin/sudo -l
+RUN sudo ldconfig -v | grep -v ^$'\t'
 
 # Create app directories
 RUN mkdir -p /home/opal/app && mkdir -p /home/opal/test
@@ -73,16 +73,15 @@ COPY ./package.json /home/opal/app/
 # Install opal-compute npm dependencies
 RUN npm install --silent; exit 0;
 RUN sudo cat /root/.npm/_logs/*; exit 0;
-RUN python --version;
 
 # Bundle app
 COPY ./src /home/opal/app/src
-COPY ./.eslintrc /home/opal/app/.eslintrc
-COPY ./test/*.js /home/opal/app/test/
-COPY ./test/*.py /home/opal/app/test/
-COPY ./test/jobs /home/opal/app/test/jobs
+COPY ./test/algorithms /home/opal/app/test/algorithms
 COPY ./config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
+COPY ./.eslintrc /home/opal/app/.eslintrc
+COPY ./test/*.py /home/opal/app/test/
+COPY ./test/*.js /home/opal/app/test/
 
-RUN sudo ldconfig -v | grep -v ^$'\t'
+EXPOSE 8001
 
-EXPOSE 80
+CMD sh -c 'sudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python'
