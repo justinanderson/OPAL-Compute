@@ -114,7 +114,7 @@ JobExecutorAbstract.prototype.fetchData = function () {
                                 reject(error);
                             });
                     }, function (error) {
-                        _this.handleExecutionError(error);
+                        reject(error);
                     });
             }
         });
@@ -202,7 +202,7 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
         let save_fn = function() {
             _this.pushModel().then(function(success) {
                 if (_this._callback !== null && _this._callback !== undefined)
-                    _this._callback(null, success.status);
+                    _this._callback(null, success.status[0]);
             }, function(error) {
                 if (_this._callback !== null && _this._callback !== undefined)
                     _this._callback(error, null);

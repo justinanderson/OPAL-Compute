@@ -6,5 +6,6 @@ module.exports = {
 	enableCors: true,
     computeType: [Constants.EAE_COMPUTE_TYPE_PYTHON2],
     opalAlgoServiceURL: 'http://algoservice:3001',
-    opalAggPrivServiceURL: ''
+    opalAggPrivServiceURL: '',
+    opalDataPath: '/home/opal/data'
 };

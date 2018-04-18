@@ -64,6 +64,13 @@ USER opal
 COPY ./setupScripts/95-sandbox /etc/sudoers.d/
 RUN sudo ldconfig -v | grep -v ^$'\t'
 
+# generate dummy data
+WORKDIR /home/opal
+RUN git clone https://github.com/shubhamjain0594/opalalgorithms.git
+WORKDIR /home/opal/opalalgorithms/tests
+RUN mkdir /home/opal/data
+RUN python generate_data.py --conf datagen.conf --data_path /home/opal/data
+
 # Create app directories
 RUN mkdir -p /home/opal/app && mkdir -p /home/opal/test
 WORKDIR /home/opal/app
@@ -79,7 +86,6 @@ COPY ./src /home/opal/app/src
 COPY ./test/algorithms /home/opal/app/test/algorithms
 COPY ./config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
 COPY ./.eslintrc /home/opal/app/.eslintrc
-COPY ./test/*.py /home/opal/app/test/
 COPY ./test/*.js /home/opal/app/test/
 
 EXPOSE 8001

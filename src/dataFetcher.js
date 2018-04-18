@@ -1,6 +1,7 @@
 // Data fetcher module
 // const { ErrorHelper, Constants } = require('eae-utils');
-
+const fs = require('fs-extra');
+let config = require('../config/opal.compute.config.js');
 
 /**
  * @class DataFetcher
@@ -21,8 +22,13 @@ function DataFetcher() {
  */
 DataFetcher.prototype.fetchDataFromServer = function(__unused__startDate, __unused__endDate, folderPath) {
     // console.log('Fetching data from ' + startDate + ' to ' + endDate);
-    return new Promise(function (resolve, __unused__reject) {
-        resolve(folderPath);
+    //TODO: Change this after intergration with DB
+    return new Promise(function (resolve, reject) {
+        fs.copy(config.opalDataPath, folderPath).then(function () {
+            resolve(folderPath);
+        }, function (error) {
+            reject(error);
+        });
     });
 };
 

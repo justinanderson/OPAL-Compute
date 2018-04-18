@@ -5,7 +5,7 @@ let config = require('../config/opal.compute.config.js');
 let TestServer = require('./testserver.js');
 const ObjectID = require('mongodb').ObjectID;
 
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000; // 20 seconds
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000; // 20 seconds
 
 let ts = new TestServer();
 
@@ -51,40 +51,44 @@ test('Wrong job_id must throw 500', function (done) {
 });
 
 
-// test('Create dummy job & start running', function(done) {
-//     expect.assertions(6);
-//     ts.createJob(eaeutils.Constants.EAE_JOB_TYPE_PYTHON2,
-//         'dummy.py', [], [ './test/jobs/dummy/dummy.py' ]).then(function(job_model) {
-//         expect(job_model).toBeDefined();
-//         expect(job_model.type).toEqual(eaeutils.Constants.EAE_JOB_TYPE_PYTHON2);
-//         job_model.output = [ 'test.txt' ]; //Manually insert expected output files
-//         g_job = Object.assign({}, job_model);
-//         request(
-//             {
-//                 method: 'POST',
-//                 baseUrl: 'http://127.0.0.1:' + config.port,
-//                 uri: '/run',
-//                 json: true,
-//                 body: {
-//                     job_id: job_model._id.toHexString()
-//                 }
-//             },
-//             function(error, response, body) {
-//                 if (error) {
-//                     done.fail(error.toString());
-//                     return;
-//                 }
-//                 expect(response).toBeDefined();
-//                 expect(response.statusCode).toEqual(200);
-//                 expect(body).toBeDefined();
-//                 expect(body.status).toEqual(eaeutils.Constants.EAE_JOB_STATUS_RUNNING);
-//                 done(); // All good !
-//             }
-//         );
-//     }, function(error) {
-//        done.fail(error.toString());
-//     });
-// });
+test('Create dummy job & start running', function(done) {
+    ts.createJob(eaeutils.Constants.EAE_JOB_TYPE_PYTHON2,
+        {
+            startDate: new Date("2016-01-01"),
+            endDate: new Date("2016-12-31"),
+            params: {},
+            algorithmName: 'density',
+            resolution: 'location_level_1',
+            keySelector: null
+        }).then(function(job_model) {
+        expect(job_model).toBeDefined();
+        expect(job_model.type).toEqual(eaeutils.Constants.EAE_JOB_TYPE_PYTHON2);
+        request(
+            {
+                method: 'POST',
+                baseUrl: 'http://127.0.0.1:' + config.port,
+                uri: '/run',
+                json: true,
+                body: {
+                    job_id: job_model._id.toHexString()
+                }
+            },
+            function(error, response, body) {
+                if (error) {
+                    done.fail(error.toString());
+                    return;
+                }
+                expect(response).toBeDefined();
+                expect(response.statusCode).toEqual(200);
+                expect(body).toBeDefined();
+                expect(body.status).toEqual(eaeutils.Constants.EAE_JOB_STATUS_DONE);
+                done(); // All good !
+            }
+        );
+    }, function(error) {
+       done.fail(error.toString());
+    });
+});
 //
 // test('Wait for compute to go idle', function(done) {
 //     expect.assertions(3);

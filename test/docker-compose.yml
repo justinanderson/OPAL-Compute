@@ -40,3 +40,6 @@ services:
 #        command: sh -c 'mkdir /tmp/codejail-test/ && cp ./test/unlim.py /tmp/codejail-test/ && /usr/venv/sandbox/bin/python /tmp/codejail-test/unlim.py'
         security_opt:
             - apparmor:unconfined
+        environment:
+            - OPALALGO_SANDBOX_VENV=/usr/venv/sandbox/
+            - OPALALGO_SANDBOX_USER=sandbox

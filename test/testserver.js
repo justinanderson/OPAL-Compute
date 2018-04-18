@@ -75,7 +75,7 @@ TestServer.prototype.createJob = function(type, params) {
     return new Promise(function(resolve, reject) {
         let job_id = new ObjectID();
         let job_model = Object.assign({},
-            opalutils.DataModels.OPAL_JOB_MODEL,
+            opalutils.DataModel.OPAL_JOB_MODEL,
             {
                 _id: job_id,
                 type: type,

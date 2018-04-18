@@ -58,7 +58,7 @@ JobController.prototype.runJob = function(req, res) {
                 res.json(ErrorHelper('Error in execution', error));
             } else {
                 res.status(200);
-                res.json(execStatus);
+                res.json({'status': execStatus});
             }
         });
     }, function(error) {

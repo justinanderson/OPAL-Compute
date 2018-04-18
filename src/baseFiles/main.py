@@ -32,7 +32,7 @@ if __name__ == "__main__":
         params['sampling'] = 1
 
     # number of threads for computation is number of cores - 1
-    number_of_threads = multiprocessing.cpu_count() - 1
+    number_of_threads = max(1, multiprocessing.cpu_count() - 1)
     algorunner = AlgorithmRunner(
         algorithm, dev_mode=False, multiprocess=True, sandboxing=True)
     result = algorunner(params, args.data_dir, number_of_threads)
