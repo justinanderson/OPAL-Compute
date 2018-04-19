@@ -69,7 +69,7 @@ WORKDIR /home/opal
 RUN git clone https://github.com/shubhamjain0594/opalalgorithms.git
 WORKDIR /home/opal/opalalgorithms/tests
 RUN mkdir /home/opal/data
-RUN python generate_data.py --conf datagen.conf --data_path /home/opal/data
+RUN python generate_data.py --conf datagen.conf --data_path /home/opal/data --num_users 100
 
 # Create app directories
 RUN mkdir -p /home/opal/app && mkdir -p /home/opal/test

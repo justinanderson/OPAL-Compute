@@ -202,7 +202,7 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
         let save_fn = function() {
             _this.pushModel().then(function(success) {
                 if (_this._callback !== null && _this._callback !== undefined)
-                    _this._callback(null, success.status[0]);
+                    _this._callback(null, success.status);
             }, function(error) {
                 if (_this._callback !== null && _this._callback !== undefined)
                     _this._callback(error, null);
@@ -223,7 +223,6 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
             _this.handleExecutionError('Post-exec - ' + error.toString());
         }); // Post execution error
     }; // end_fn
-
     _this._preExecution().then(function() {
         // Fork a process on the machine
         _this._child_process = child_process.spawn(command, args, options);

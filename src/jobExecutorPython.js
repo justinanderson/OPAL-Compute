@@ -86,7 +86,7 @@ JobExecutorPython.prototype.startExecution = function(callback) {
     _this.fetchModel().then(function () {
         _this._model.startDate = new Date();
         _this.fetchData().then(function (__unused__dataDir) {
-            //Clean model for execution
+            // Clean model for execution
             _this._model.stdout = '';
             _this._model.stderr = '';
             _this._model.status.unshift(Constants.EAE_JOB_STATUS_RUNNING);
@@ -103,11 +103,11 @@ JobExecutorPython.prototype.startExecution = function(callback) {
                 _this.handleExecutionError(error.toString());
             });
         }, function (error) {
-            let message = 'Error in fetching model ' + error.toString();
+            let message = 'Error in fetching data - ' + error.toString();
             _this.handleExecutionError(message);
         });
     }, function (error) {
-        let message = 'Error in fetching data - ' + error.toString();
+        let message = 'Error in fetching model ' + error.toString();
         _this.handleExecutionError(message);
     });
 };
@@ -120,7 +120,6 @@ JobExecutorPython.prototype.startExecution = function(callback) {
 JobExecutorPython.prototype.stopExecution = function(callback) {
     this._callback = callback;
     this._kill();
-    // throw 'Should call _kill here';
 };
 
 module.exports = JobExecutorPython;
