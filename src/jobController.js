@@ -42,22 +42,22 @@ JobController.prototype.runJob = function(req, res) {
     //Set the node to busy
     _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_BUSY);
 
-    //Create executor based on type
+    // Create executor based on type
     _this._jobExecFactory.createFromId(job_id, _this._jobCollection).then(function(executor) {
         _this._executor = executor;
-        //Trigger asynchronous execution
-        _this._executor.startExecution(function(__unused__error) {
-            //After exec, set the node to idle
+        // Trigger asynchronous execution
+        res.status(200);
+        res.json(_this._executor._model);
+        _this._executor.startExecution(function(__unused__error, __unused__execStatus) {
+            // After exec, set the node to idle
             _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_IDLE);
-            //Cleanup executor instance
+            // Cleanup executor instance
             delete _this._executor;
         });
-        res.status(200);
-        res.json({ ok: true, status: Constants.EAE_JOB_STATUS_RUNNING });
     }, function(error) {
+        delete _this._executor;
         res.status(500);
         res.json(ErrorHelper('Execution aborted', error));
-        delete _this._executor;
 
         // Set the node to idle
         _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_IDLE);
@@ -79,22 +79,21 @@ JobController.prototype.cancelJob = function(__unused__req, res) {
         return;
     }
 
-    // Will cancel, set the node to idle
-    _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_IDLE);
-
-    _this._executor.stopExecution(function(error, jobStatus) {
-        //Cleanup executor instance
-        delete _this._executor;
-
+    _this._executor.stopExecution(function(error, __unused__jobStatus) {
         if (error !== undefined && error !== null) {
             res.status(500);
             res.json(ErrorHelper('Failed to interrupt job', error));
         }
         else {
-            //Reply inside callback so the job is stopped
+            // Reply inside callback so the job is stopped
+            // Will cancel, set the node to idle
+            _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_IDLE);
+
             res.status(200);
-            res.json({ status: jobStatus });
+            res.json(_this._executor._model);
         }
+        //Cleanup executor instance
+        delete _this._executor;
     });
 };
 

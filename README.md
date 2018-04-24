@@ -17,3 +17,9 @@ At its construction, the `opalCompute` server receives a configuration object th
  * [Example configuration](config/opal.compute.sample.config.js)
  * [Tests configuration](config/opal.compute.test.config.js)
  
+ 
+## Docker Error Links
+
+- https://forums.docker.com/t/docker-stack-ignores-cap-add-and-privileged-option-within-compose-file/39278
+
+ 

@@ -2,11 +2,12 @@ const ObjectID = require('mongodb').ObjectID;
 const { ErrorHelper, Constants } =  require('eae-utils');
 
 const JobExecutorPython = require('./jobExecutorPython.js');
-const JobExecutorPip = require('./jobExecutorPip.js');
-const JobExecutorPython3 = require('./jobExecutorPython3.js');
-const JobExecutorPip3 = require('./jobExecutorPip3.js');
-const JobExecutorR = require('./jobExecutorR.js');
-const JobExecutorTensorflow = require('./jobExecutorTensorflow.js');
+// TODO: Other type of executions which can be activated later in OPAL.
+// const JobExecutorPip = require('./jobExecutorPip.js');
+// const JobExecutorPython3 = require('./jobExecutorPython3.js');
+// const JobExecutorPip3 = require('./jobExecutorPip3.js');
+// const JobExecutorR = require('./jobExecutorR.js');
+// const JobExecutorTensorflow = require('./jobExecutorTensorflow.js');
 
 /**
  * @class JobExecutorFactory
@@ -29,30 +30,35 @@ function JobExecutorFactory() {
  */
 JobExecutorFactory.prototype.createFromId = function(jobID, jobCollection) {
     return new Promise(function(resolve, reject) {
-        jobCollection.findOne({ _id: new ObjectID(jobID) }).then(function(jobModel) {
-            jobModel = Object.assign({type: 'unknown_id'}, jobModel);
-            switch (jobModel.type) {
-                case Constants.EAE_JOB_TYPE_PYTHON2:
-                    resolve(new JobExecutorPython(jobID, jobCollection, jobModel));
-                    break;
-                case Constants.EAE_JOB_TYPE_PIP:
-                    resolve(new JobExecutorPip(jobID, jobCollection, jobModel));
-                    break;
-                case Constants.EAE_JOB_TYPE_PYTHON3:
-                    resolve(new JobExecutorPython3(jobID, jobCollection, jobModel));
-                    break;
-                case Constants.EAE_JOB_TYPE_PIP3:
-                    resolve(new JobExecutorPip3(jobID, jobCollection, jobModel));
-                    break;
-                case Constants.EAE_JOB_TYPE_R:
-                    resolve(new JobExecutorR(jobID, jobCollection, jobModel));
-                    break;
-                case Constants.EAE_JOB_TYPE_TENSORFLOW:
-                    resolve(new JobExecutorTensorflow(jobID, jobCollection, jobModel));
-                    break;
-                default:
-                    reject(ErrorHelper('Execution is not supported for ' + jobModel.type));
-                    break;
+        jobCollection.findOne({_id: new ObjectID(jobID)}).then(function(jobModel) {
+            if (jobModel) {
+                jobModel = Object.assign({type: 'unknown_id'}, jobModel);
+                switch (jobModel.type) {
+                    case Constants.EAE_JOB_TYPE_PYTHON2:
+                        resolve(new JobExecutorPython(jobID, jobCollection, jobModel));
+                        break;
+                    // TODO: Other type of executions which can be activated later in OPAL.
+                    // case Constants.EAE_JOB_TYPE_PIP:
+                    //     resolve(new JobExecutorPip(jobID, jobCollection, jobModel));
+                    //     break;
+                    // case Constants.EAE_JOB_TYPE_PYTHON3:
+                    //     resolve(new JobExecutorPython3(jobID, jobCollection, jobModel));
+                    //     break;
+                    // case Constants.EAE_JOB_TYPE_PIP3:
+                    //     resolve(new JobExecutorPip3(jobID, jobCollection, jobModel));
+                    //     break;
+                    // case Constants.EAE_JOB_TYPE_R:
+                    //     resolve(new JobExecutorR(jobID, jobCollection, jobModel));
+                    //     break;
+                    // case Constants.EAE_JOB_TYPE_TENSORFLOW:
+                    //     resolve(new JobExecutorTensorflow(jobID, jobCollection, jobModel));
+                    //     break;
+                    default:
+                        reject(ErrorHelper('Execution is not supported for ' + jobModel.type));
+                        break;
+                }
+            } else {
+                reject(ErrorHelper('No job with id ' + jobID + ' available'));
             }
         }, function (error) {
             reject(ErrorHelper('Cannot create job executor', error));

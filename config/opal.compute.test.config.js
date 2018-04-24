@@ -1,12 +1,11 @@
 const {Constants}  =  require('eae-utils');
 
 module.exports = {
-    mongoURL: 'mongodb://mongodb/eae',
-    port: 80,
+    mongoURL: 'mongodb://mongodb/opal',
+    port: 8001,
 	enableCors: true,
-    swiftURL: 'http://swift:8080',
-    swiftUsername: 'test:tester',
-    swiftPassword: 'testing',
     computeType: [Constants.EAE_COMPUTE_TYPE_PYTHON2],
-    clusters:{}
+    opalAlgoServiceURL: 'http://algoservice:3001',
+    opalAggPrivServiceURL: '',
+    opalDataPath: '/home/opal/data'
 };
