@@ -79,22 +79,21 @@ JobController.prototype.cancelJob = function(__unused__req, res) {
         return;
     }
 
-    _this._executor.stopExecution(function(error, jobStatus) {
-        //Cleanup executor instance
-        delete _this._executor;
-
+    _this._executor.stopExecution(function(error, __unused__jobStatus) {
         if (error !== undefined && error !== null) {
             res.status(500);
             res.json(ErrorHelper('Failed to interrupt job', error));
         }
         else {
-            //Reply inside callback so the job is stopped
+            // Reply inside callback so the job is stopped
             // Will cancel, set the node to idle
             _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_IDLE);
 
             res.status(200);
-            res.json({ status: jobStatus });
+            res.json(_this._executor._model);
         }
+        //Cleanup executor instance
+        delete _this._executor;
     });
 };
 

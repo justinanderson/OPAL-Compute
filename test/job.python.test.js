@@ -210,7 +210,7 @@ test('Check the new job is running', function(done) {
                 done();
             }
         );
-    }, 2000); // 2 seconds
+    }, 1000); // 1 seconds
 });
 
 test('Cancel running job', function(done) {
@@ -255,7 +255,7 @@ test('Check compute is idle after 1 sec', function(done) {
                 uri: '/status',
                 json: true
             },
-            function (error  , response, body) {
+            function (error, response, body) {
                 if (error) {
                     done.fail(error.toString());
                 }
@@ -265,7 +265,7 @@ test('Check compute is idle after 1 sec', function(done) {
                 done();
             }
         );
-    }, 1000); // 1 Sec
+    }, 10000); // 3 Sec
 });
 
 test('Delete cancel job', function(done) {
@@ -280,24 +280,12 @@ test('Delete cancel job', function(done) {
 });
 
 
-afterEach(function () {
-    return new Promise(function (resolve, reject) {
-        ts.emptyCollection(eaeutils.Constants.EAE_COLLECTION_JOBS).then(function () {
-            resolve(true);
-        }, function (error) {
-            reject(error.toString());
-        });
-    });
-});
-
 afterAll(function() {
     return new Promise(function (resolve, reject) {
         ts.stop().then(function() {
             resolve(true);
         }, function(error) {
-            // console.log(error);
             reject(error.toString());
         });
-
     });
 });

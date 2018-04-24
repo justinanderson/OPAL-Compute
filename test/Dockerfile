@@ -32,12 +32,10 @@ RUN apt-get install -y build-essential
 
 RUN rm -rf /etc/apparmor.d/docker-engine
 
-RUN ls /etc/apparmor.d
-
 # Install python library required
 RUN pip install git+https://github.com/OPAL-Project/codejail.git \
     && pip install git+https://github.com/emalgorithm/bandicoot.git \
-    && pip install opalalgorithms
+    && pip install git+https://github.com/OPAL-Project/opalalgorithms.git
 
 # Creating virtualenv for sandbox
 RUN mkdir /usr/venv
@@ -45,24 +43,25 @@ RUN pip install virtualenv \
     && virtualenv /usr/venv/sandbox \
     && chmod +x /usr/venv/sandbox/bin/activate
 
-RUN ls -alh /usr/venv/sandbox/bin/
-
 # install libraries in virtualenv
 RUN /bin/bash -c "source /usr/venv/sandbox/bin/activate \
     && pip install git+https://github.com/emalgorithm/bandicoot.git \
     && pip install git+https://github.com/OPAL-Project/codejail.git \
-    && pip install opalalgorithms \
+    && pip install git+https://github.com/OPAL-Project/opalalgorithms.git \
     && deactivate"
 
 # create a sandbox user
 RUN useradd -ms /bin/bash sandbox
 COPY ./setupScripts/usr.venv.sandbox.bin.python /etc/apparmor.d/
 
+RUN echo "#!/bin/bash\nsudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python" > /usr/bin/apparmor_init && \
+    chmod +x /usr/bin/apparmor_init
+
 RUN useradd -ms /bin/bash opal
 USER opal
 
 COPY ./setupScripts/95-sandbox /etc/sudoers.d/
-RUN sudo ldconfig -v | grep -v ^$'\t'
+RUN sudo ldconfig
 
 # generate dummy data
 WORKDIR /home/opal
@@ -89,5 +88,3 @@ COPY ./.eslintrc /home/opal/app/.eslintrc
 COPY ./test/*.js /home/opal/app/test/
 
 EXPOSE 8001
-
-CMD sh -c 'sudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python'

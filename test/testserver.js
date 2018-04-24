@@ -5,6 +5,7 @@ let ObjectID = require('mongodb').ObjectID;
 const request = require('request');
 const opalutils = require('opal-utils');
 const TestUtils = require('./test_utils.js');
+const eaeutils = require('eae-utils');
 
 
 function TestServer() {
@@ -38,7 +39,11 @@ TestServer.prototype.run = function() {
                 if (error)
                     reject(error);
                 else {
-                    resolve(true);
+                    _this.mongo().createCollection(eaeutils.Constants.EAE_COLLECTION_JOBS, {
+                        strict: true
+                    }, function(_unused__err, _unused__collection) {
+                        resolve(true);
+                    });
                 }
             });
         }, function (error) {
@@ -52,7 +57,6 @@ TestServer.prototype.stop = function() {
     return new Promise(function(resolve, reject) {
         // Remove test flag from env
         delete process.env.TEST;
-
         _this.opal_compute.stop().then(function() {
             _this._server.close(function(error) {
                 if (error)
@@ -140,6 +144,8 @@ TestServer.prototype.emptyCollection = function (collectionName) {
                         }, function (error) {
                             reject(error);
                         });
+                } else {
+                    resolve(true);
                 }
             }, function (error) {
                 reject(error);

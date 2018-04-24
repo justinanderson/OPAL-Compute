@@ -25,6 +25,7 @@ function JobExecutorAbstract(jobID, jobCollection, jobModel) {
     this._tmpDirectory = null;
     this._child_process = null;
     this._dataDir = null;
+    this._kill_signal = 'SIGINT';
 
     // Bind member functions
     this.fetchData = JobExecutorAbstract.prototype.fetchData.bind(this);
@@ -58,6 +59,8 @@ JobExecutorAbstract.prototype.handleExecutionError = function(message, status) {
     _this._model.message = message;
     _this._cleanUp();
     _this.pushModel().then(function() {
+        if (status === Constants.EAE_JOB_STATUS_CANCELLED)
+            _this._callback(null, status);
         if (_this._callback !== null && _this._callback !== undefined)
             _this._callback(message, null);
     }, function(error) {
@@ -251,8 +254,8 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
                     _this.handleExecutionError('Error in execution');
                 }
             }
-            else if (signal === 'SIGTERM') {
-                _this.handleExecutionError('Interrupt success', Constants.EAE_JOB_STATUS_CANCELLED);
+            else if (signal === _this._kill_signal) {
+                end_fn(Constants.EAE_JOB_STATUS_CANCELLED, code, 'Interrupt success');
             }
             else {
                 _this.handleExecutionError('Exit error', Constants.EAE_JOB_STATUS_ERROR);
@@ -272,7 +275,7 @@ JobExecutorAbstract.prototype._kill = function() {
     let _this = this;
 
     if (_this._child_process !== undefined) {
-        _this._child_process.kill('SIGTERM');
+        _this._child_process.kill(_this._kill_signal);
     }
 };
 
