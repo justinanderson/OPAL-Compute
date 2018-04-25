@@ -1,5 +1,6 @@
 // Utilities for testing
 const fs = require('fs');
+const { Constants_Opal } = require('opal-utils');
 
 
 /**
@@ -29,7 +30,7 @@ TestUtils.prototype.getPostData = function (data) {
         algorithm: {
             code: _this.getFileBase64(filename),
             className: data.hasOwnProperty('className') ? data.className : 'PopulationDensity',
-            reducer: data.hasOwnProperty('reducer') ? data.reducer : 'count'
+            reducer: data.hasOwnProperty('reducer') ? data.reducer : Constants_Opal.OPAL_AGGREGATION_METHOD_COUNT
         }
     };
 };
