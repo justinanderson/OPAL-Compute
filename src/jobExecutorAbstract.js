@@ -79,29 +79,14 @@ JobExecutorAbstract.prototype.handleExecutionError = function(message, status) {
     _this._model.exitCode = 1;
     _this._model.message = message;
     _this._cleanUp();
-    _this._contactAggregationService('cancel').then(function(){
-        _this.pushModel().then(function() {
-            if (status === Constants.EAE_JOB_STATUS_CANCELLED)
-                _this._callback(null, status);
-            if (_this._callback !== null && _this._callback !== undefined)
-                _this._callback(message, null);
-        }, function(error) {
-            message = 'Error in pushing model - ' + error.toString() + '\n' + message;
-            if (_this._callback !== null && _this._callback !== undefined)
-                _this._callback(message, null);
-        });
-    }, function(error){
-        _this._model.aggregationError = error;
-        _this.pushModel().then(function() {
-            if (status === Constants.EAE_JOB_STATUS_CANCELLED)
-                _this._callback(null, status);
-            if (_this._callback !== null && _this._callback !== undefined)
-                _this._callback(message, null);
-        }, function(error) {
-            message = 'Error in pushing model - ' + error.toString() + '\n' + message;
-            if (_this._callback !== null && _this._callback !== undefined)
-                _this._callback(message, null);
-        });
+    _this.pushModel().then(function() {
+        _this._contactAggregationService('cancel');
+        if (_this._callback !== null && _this._callback !== undefined)
+            _this._callback(message, null);
+    }, function(error) {
+        message = 'Error in pushing model - ' + error.toString() + '\n' + message;
+        if (_this._callback !== null && _this._callback !== undefined)
+            _this._callback(message, null);
     });
 };
 
@@ -203,7 +188,6 @@ JobExecutorAbstract.prototype.fetchModel = function() {
         _this._jobCollection.findOne({ _id : _this._jobID })
             .then(function(jobModel) {
                 _this._model = jobModel;
-                _this._model.params.aggregationServiceUrl = global.opal_compute_config.opalAggPrivServiceURL;
                 resolve(jobModel);
             }, function(error) {
                 reject(ErrorHelper('Failed to fetch job ' + _this._jobID.toHexString(), error));
@@ -220,11 +204,11 @@ JobExecutorAbstract.prototype.pushModel = function() {
     let _this = this;
 
     return new Promise(function(resolve, reject) {
-        let replacementData = _this._model;
+        let replacementData = Object.assign({}, _this._model);
         delete replacementData._id; // Cleanup MongoDB managed _id field, if any
-        _this._jobCollection.findOneAndReplace({ _id : _this._jobID }, replacementData, { upsert: true, returnOriginal: false })
-            .then(function(success) {
-                resolve(success.value);
+        _this._jobCollection.updateOne({ _id : _this._jobID }, {$set: replacementData})
+            .then(function() {
+                resolve(_this._model);
             }, function(error) {
                 reject(ErrorHelper('Failed to push job ' + _this._jobID.toHexString(), error));
             });
@@ -245,6 +229,11 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
     let end_fn = function(status, code, message = '') {
         let save_fn = function() {
             _this.pushModel().then(function(success) {
+                if (status === Constants.EAE_JOB_STATUS_DONE){
+                    _this._contactAggregationService('finish');
+                } else {
+                    _this._contactAggregationService('cancel');
+                }
                 if (_this._callback !== null && _this._callback !== undefined)
                     _this._callback(null, success.status);
             }, function(error) {
@@ -259,12 +248,7 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
             _this._model.status.unshift(status);
             _this._model.exitCode = code;
             _this._cleanUp();
-            _this._contactAggregationService('finish').then(function () {
-                save_fn();
-            }, function(error) {
-                _this._model._aggregationError = 'Error in finish request - ' + error.toString();
-                save_fn();
-            });
+            save_fn();
         }, function (error) {
             // Post execution error
             if (_this._child_process !== undefined) {
