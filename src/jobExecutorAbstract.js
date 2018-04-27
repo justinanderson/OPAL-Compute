@@ -25,6 +25,7 @@ function JobExecutorAbstract(jobID, jobCollection, jobModel) {
     this._tmpDirectory = null;
     this._child_process = null;
     this._dataDir = null;
+    this._algorithm = null;
     this._kill_signal = 'SIGINT';
 
     // Bind member functions
@@ -36,6 +37,7 @@ function JobExecutorAbstract(jobID, jobCollection, jobModel) {
     this.handleExecutionError = JobExecutorAbstract.prototype.handleExecutionError.bind(this);
     this.fetchAlgorithm = JobExecutorAbstract.prototype.fetchAlgorithm.bind(this);
     this._cleanUp = JobExecutorAbstract.prototype._cleanUp.bind(this);
+    this._contactAggregationService = JobExecutorAbstract.prototype._contactAggregationService.bind(this);
 
     // Bind pure member functions
     this._preExecution = JobExecutorAbstract.prototype._preExecution.bind(this);
@@ -43,6 +45,25 @@ function JobExecutorAbstract(jobID, jobCollection, jobModel) {
     this.startExecution = JobExecutorAbstract.prototype.startExecution.bind(this);
     this.stopExecution = JobExecutorAbstract.prototype.stopExecution.bind(this);
 }
+
+
+JobExecutorAbstract.prototype._contactAggregationService = function (event) {
+    let _this = this;
+    let aggregationEventUrl =  url.resolve(global.opal_compute_config.opalAggPrivServiceURL, '/' + event + '/');
+    let jobEventUrl = url.resolve(aggregationEventUrl, _this._model._id.toString());
+    let data = {};
+    switch (event){
+        case 'start':
+            data = {
+                aggregationMethod: _this._algorithm.reducer,
+                keySelector: _this._model.params.keySelector
+            };
+            break;
+        default:
+            data = {};
+    }
+    return axios.post(jobEventUrl, data);
+};
 
 /**
  * @fn handleExecutionError
@@ -58,15 +79,29 @@ JobExecutorAbstract.prototype.handleExecutionError = function(message, status) {
     _this._model.exitCode = 1;
     _this._model.message = message;
     _this._cleanUp();
-    _this.pushModel().then(function() {
-        if (status === Constants.EAE_JOB_STATUS_CANCELLED)
-            _this._callback(null, status);
-        if (_this._callback !== null && _this._callback !== undefined)
-            _this._callback(message, null);
-    }, function(error) {
-        message = 'Error in pushing model - ' + error.toString() + '\n' + message;
-        if (_this._callback !== null && _this._callback !== undefined)
-            _this._callback(message, null);
+    _this._contactAggregationService('cancel').then(function(){
+        _this.pushModel().then(function() {
+            if (status === Constants.EAE_JOB_STATUS_CANCELLED)
+                _this._callback(null, status);
+            if (_this._callback !== null && _this._callback !== undefined)
+                _this._callback(message, null);
+        }, function(error) {
+            message = 'Error in pushing model - ' + error.toString() + '\n' + message;
+            if (_this._callback !== null && _this._callback !== undefined)
+                _this._callback(message, null);
+        });
+    }, function(error){
+        _this._model.aggregationError = error;
+        _this.pushModel().then(function() {
+            if (status === Constants.EAE_JOB_STATUS_CANCELLED)
+                _this._callback(null, status);
+            if (_this._callback !== null && _this._callback !== undefined)
+                _this._callback(message, null);
+        }, function(error) {
+            message = 'Error in pushing model - ' + error.toString() + '\n' + message;
+            if (_this._callback !== null && _this._callback !== undefined)
+                _this._callback(message, null);
+        });
     });
 };
 
@@ -140,7 +175,12 @@ JobExecutorAbstract.prototype.fetchAlgorithm = function () {
                 let algorithmURL = url.resolve(retrievalURL, jobModel.params.algorithmName + '/');
                 axios.get(algorithmURL).then(
                     function (response) {
-                        resolve(response.data.item.algorithm);
+                        if (response.status === 200){
+                            _this._algorithm = response.data.item.algorithm;
+                            resolve(_this._algorithm);
+                        } else {
+                            reject(ErrorHelper(response.data));
+                        }
                     }, function (error) {
                         reject(ErrorHelper(error));
                     });
@@ -163,6 +203,7 @@ JobExecutorAbstract.prototype.fetchModel = function() {
         _this._jobCollection.findOne({ _id : _this._jobID })
             .then(function(jobModel) {
                 _this._model = jobModel;
+                _this._model.params.aggregationServiceUrl = global.opal_compute_config.opalAggPrivServiceURL;
                 resolve(jobModel);
             }, function(error) {
                 reject(ErrorHelper('Failed to fetch job ' + _this._jobID.toHexString(), error));
@@ -218,49 +259,64 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
             _this._model.status.unshift(status);
             _this._model.exitCode = code;
             _this._cleanUp();
-            save_fn();
+            _this._contactAggregationService('finish').then(function () {
+                save_fn();
+            }, function(error) {
+                _this._model._aggregationError = 'Error in finish request - ' + error.toString();
+                save_fn();
+            });
         }, function (error) {
+            // Post execution error
             if (_this._child_process !== undefined) {
                 delete _this._child_process;
             }
             _this.handleExecutionError('Post-exec - ' + error.toString());
-        }); // Post execution error
+        });
     }; // end_fn
     _this._preExecution().then(function() {
-        // Fork a process on the machine
-        _this._child_process = child_process.spawn(command, args, options);
+        _this._contactAggregationService('start').then(
+            function (response) {
+                if (response.status === 200){
+                    // Fork a process on the machine
+                    _this._child_process = child_process.spawn(command, args, options);
 
-        // Stores stdout
-        _this._child_process.stdout.on('data', function (stdout_data) {
-            _this._model.stdout += stdout_data;
-        });
+                    // Stores stdout
+                    _this._child_process.stdout.on('data', function (stdout_data) {
+                        _this._model.stdout += stdout_data;
+                    });
 
-        // Stores stderr
-        _this._child_process.stderr.on('data', function (stderr_data) {
-            _this._model.stderr += stderr_data;
-        });
+                    // Stores stderr
+                    _this._child_process.stderr.on('data', function (stderr_data) {
+                        _this._model.stderr += stderr_data;
+                    });
 
-        //Handle spawn errors
-        _this._child_process.on('error', function (error) {
-            _this.handleExecutionError('Spawn - ' + error.toString(), Constants.EAE_JOB_STATUS_ERROR);
-        });
+                    //Handle spawn errors
+                    _this._child_process.on('error', function (error) {
+                        _this.handleExecutionError('Spawn - ' + error.toString(), Constants.EAE_JOB_STATUS_ERROR);
+                    });
 
-        //Handle child termination
-        _this._child_process.on('exit', function (code, signal) {
-            if (code !== null) { // Successful run or interruption
-                if (code === 0){
-                    end_fn(Constants.EAE_JOB_STATUS_DONE, code, 'Exit success');
+                    //Handle child termination
+                    _this._child_process.on('exit', function (code, signal) {
+                        if (code !== null) { // Successful run or interruption
+                            if (code === 0){
+                                end_fn(Constants.EAE_JOB_STATUS_DONE, code, 'Exit success');
+                            } else {
+                                _this.handleExecutionError('Error in execution');
+                            }
+                        }
+                        else if (signal === _this._kill_signal) {
+                            end_fn(Constants.EAE_JOB_STATUS_CANCELLED, code, 'Interrupt success');
+                        }
+                        else {
+                            _this.handleExecutionError('Exit error', Constants.EAE_JOB_STATUS_ERROR);
+                        }
+                    });
                 } else {
-                    _this.handleExecutionError('Error in execution');
+                    _this.handleExecutionError('Agg - start, status code - ' + response.status + 'Error - ' + response.data.toString());
                 }
-            }
-            else if (signal === _this._kill_signal) {
-                end_fn(Constants.EAE_JOB_STATUS_CANCELLED, code, 'Interrupt success');
-            }
-            else {
-                _this.handleExecutionError('Exit error', Constants.EAE_JOB_STATUS_ERROR);
-            }
-        });
+            }, function (error) {
+                _this.handleExecutionError('Agg - start - ' + error.toString());
+            });
     }, function (error) {
         _this.handleExecutionError('Pre-exec - ' + error.toString());
     });
