@@ -116,14 +116,21 @@ test('Wait for compute to go idle', function(done) {
 });
 
 test('Check dummy output result and delete job', function(done) {
-    expect.assertions(1);
-    ts.deleteJob(g_job).then(function(result) {
-        expect(result).toBeTruthy();
-        g_job = null;
-        done();
-    }, function(error) {
+    expect.assertions(2);
+    ts.opal_compute.jobController._jobCollection.findOne({_id: g_job._id}).then(
+        function(jobModel){
+            expect(typeof jobModel.output).toBe('object');
+            ts.deleteJob(g_job).then(function(result) {
+                expect(result).toBeTruthy();
+                g_job = null;
+                done();
+            }, function(error) {
+                done.fail(error.toString());
+            });
+        }, function(error) {
         done.fail(error.toString());
     });
+
 });
 
 test('Cancel job on idle compute, check error', function(done) {

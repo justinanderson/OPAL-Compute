@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const fse = require('fs-extra');
 const {Constants} = require('eae-utils');
+const url = require('url');
 
 const JobExecutorAbstract = require('./jobExecutorAbstract.js');
 const { ErrorHelper } = require('eae-utils');
@@ -45,6 +46,9 @@ JobExecutorPython.prototype._preExecution = function() {
                 fs.copyFileSync(path.join(__dirname, 'baseFiles/main.py'), path.join(_this._tmpDirectory, 'main.py'));
                 fse.outputJson(path.join(_this._tmpDirectory, 'algorithm.json'), algorithm).then(function () {
                     let model_params = (_this._model.params !== undefined && _this._model.params !== null) ? _this._model.params : {};
+                    let aggregationUpdateUrl = url.resolve(global.opal_compute_config.opalAggPrivServiceURL, '/update/');
+                    let jobUpdateUrl = url.resolve(aggregationUpdateUrl, _this._model._id.toString());
+                    model_params['aggregationServiceUrl'] = jobUpdateUrl;
                     fse.outputJson(path.join(_this._tmpDirectory, 'params.json'), model_params).then(function () {
                         resolve(true);
                     }, function (error) {
