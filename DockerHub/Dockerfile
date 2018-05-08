@@ -30,10 +30,12 @@ RUN apt-get install -y nodejs
 
 RUN apt-get install -y build-essential
 
+RUN rm -rf /etc/apparmor.d/docker-engine
+
 # Install python library required
 RUN pip install git+https://github.com/OPAL-Project/codejail.git \
     && pip install git+https://github.com/emalgorithm/bandicoot.git \
-    && pip install opalalgorithms
+    && pip install git+https://github.com/OPAL-Project/opalalgorithms.git
 
 # Creating virtualenv for sandbox
 RUN mkdir /usr/venv
@@ -41,13 +43,11 @@ RUN pip install virtualenv \
     && virtualenv /usr/venv/sandbox \
     && chmod +x /usr/venv/sandbox/bin/activate
 
-RUN ls -alh /usr/venv/sandbox/bin/
-
 # install libraries in virtualenv
 RUN /bin/bash -c "source /usr/venv/sandbox/bin/activate \
     && pip install git+https://github.com/emalgorithm/bandicoot.git \
     && pip install git+https://github.com/OPAL-Project/codejail.git \
-    && pip install opalalgorithms \
+    && pip install git+https://github.com/OPAL-Project/opalalgorithms.git \
     && deactivate"
 
 WORKDIR /root
@@ -63,24 +63,27 @@ RUN cp ./setupScripts/95-sandbox /etc/sudoers.d/
 
 # create a sandbox user
 RUN useradd -ms /bin/bash sandbox
+
+RUN echo "#!/bin/bash\nsudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python" > /usr/bin/apparmor_init && \
+    chmod +x /usr/bin/apparmor_init
+
 RUN useradd -ms /bin/bash opal
 USER opal
 
+RUN sudo ldconfig
+
 # Create app directories
-RUN mkdir -p /home/opal/app/config && mkdir -p /home/opal/test
+RUN mkdir -p /home/opal/app && mkdir -p /home/opal/test
 
-# Bundle app
-RUN cp package.json /home/opal/app/ \
-   && cp -r src /home/opal/src \
-   && cp config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
-
-WORKDIR /home/opal/app
+# Install app dependencies
+RUN cp ./package.json /home/opal/app/
 
 # Install opal-compute npm dependencies
 RUN npm install --silent; exit 0;
 RUN sudo cat /root/.npm/_logs/*; exit 0;
 
 # Bundle app
-RUN sudo ldconfig -v | grep -v ^$'\t'
+RUN cp ./src /home/opal/app/src
+RUN cp ./config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
 
-EXPOSE 80
+EXPOSE 8001
