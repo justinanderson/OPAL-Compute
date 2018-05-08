@@ -11,7 +11,7 @@ services:
             - 27017:27017
 
     algoservice:
-        image: shubhamjain0594/opal-algoservice
+        image: opalservices/opal-algoservice
         depends_on:
             - mongodb
         links:
@@ -20,6 +20,18 @@ services:
             - 3001:3001
         expose:
             - 3001
+        command: sh -c './src/wait-for.sh mongodb:27017 -- npm start'
+
+    aggandprivacy:
+        image: opalservices/opal-privacy
+        depends_on:
+            - mongodb
+        links:
+            - mongodb
+        ports:
+            - 9001:9001
+        expose:
+            - 9001
         command: sh -c './src/wait-for.sh mongodb:27017 -- npm start'
 
     tests:
@@ -31,9 +43,11 @@ services:
         depends_on:
             - mongodb
             - algoservice
+            - aggandprivacy
         links:
             - mongodb
             - algoservice
+            - aggandprivacy
         privileged: true
         ports:
             - 80:80
