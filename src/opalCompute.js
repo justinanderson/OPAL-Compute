@@ -3,6 +3,8 @@ const mongodb = require('mongodb').MongoClient;
 const express = require('express');
 const body_parser = require('body-parser');
 const { ErrorHelper, StatusHelper, Constants } =  require('eae-utils');
+const { Client } = require('pg');
+
 
 const package_json = require('../package.json');
 const StatusController = require('./statusController.js');
@@ -23,6 +25,7 @@ function OpalCompute(config) {
     this._connectDb = OpalCompute.prototype._connectDb.bind(this);
     this._setupStatusController = OpalCompute.prototype._setupStatusController.bind(this);
     this._setupJobController = OpalCompute.prototype._setupJobController.bind(this);
+    this._connectPostgres = OpalCompute.prototype._connectPostgres.bind(this);
 
 
     // Remove unwanted express headers
@@ -51,14 +54,18 @@ OpalCompute.prototype.start = function() {
     let _this = this;
     return new Promise(function (resolve, reject) {
         _this._connectDb().then(function () {
-            // Setup route using controllers
-            _this._setupStatusController();
-            _this._setupJobController();
+            _this._connectPostgres().then(function () {
+                // Setup route using controllers
+                _this._setupStatusController();
+                _this._setupJobController();
 
-            // Start status periodic update
-            _this.status_helper.startPeriodicUpdate(5 * 1000); // Update status every 5 seconds
+                // Start status periodic update
+                _this.status_helper.startPeriodicUpdate(5 * 1000); // Update status every 5 seconds
 
-            resolve(_this.app); // All good, returns application
+                resolve(_this.app); // All good, returns application
+            }, function (error) {
+                reject(error);
+            });
         }, function (error) {
             reject(ErrorHelper('Cannot establish mongoDB connection', error));
         });
@@ -78,10 +85,17 @@ OpalCompute.prototype.stop = function() {
         _this.status_helper.stopPeriodicUpdate();
         // Disconnect DB --force
         _this.db.close(true).then(function(error) {
-            if (error)
+            if (error) {
                 reject(ErrorHelper('Closing mongoDB connection failed', error));
-            else
-                resolve(true);
+            }
+            else {
+                _this.postgresClient.end(function (error) {
+                    if (error)
+                        reject(ErrorHelper('Closing postgres connection failed', error));
+                    else
+                        resolve(true);
+                });
+            }
         });
     });
 };
@@ -133,9 +147,26 @@ OpalCompute.prototype._setupStatusController = function () {
 OpalCompute.prototype._setupJobController = function () {
     let _this = this;
 
-    _this.jobController = new JobController(_this.db.collection(Constants.EAE_COLLECTION_JOBS), _this.status_helper);
+    _this.jobController = new JobController(_this.postgresClient, _this.db.collection(Constants.EAE_COLLECTION_JOBS), _this.status_helper);
     _this.app.post('/run', _this.jobController.runJob); // POST run a job from ID
     _this.app.post('/cancel', _this.jobController.cancelJob); // POST cancel current job
+};
+
+OpalCompute.prototype._connectPostgres = function () {
+    let _this = this;
+    let config = {
+        connectionString: _this.config.timescaleURL
+    };
+    return new Promise(function (resolve, reject) {
+        _this.postgresClient = new Client(config);
+        _this.postgresClient.connect()
+            .then(function () {
+                resolve(true);
+            })
+            .catch(function (e) {
+                reject(ErrorHelper('Failed to connect with postgres', e));
+            });
+    });
 };
 
 module.exports = OpalCompute;

@@ -28,14 +28,14 @@ function JobExecutorFactory() {
  * @param jobCollection MongoDD job storage collection
  * @return {Promise} Resolve to executor implementation based on job type OR rejects an error stack
  */
-JobExecutorFactory.prototype.createFromId = function(jobID, jobCollection) {
+JobExecutorFactory.prototype.createFromId = function(jobID, postgresClient, jobCollection) {
     return new Promise(function(resolve, reject) {
         jobCollection.findOne({_id: new ObjectID(jobID)}).then(function(jobModel) {
             if (jobModel) {
                 jobModel = Object.assign({type: 'unknown_id'}, jobModel);
                 switch (jobModel.type) {
                     case Constants.EAE_JOB_TYPE_PYTHON2:
-                        resolve(new JobExecutorPython(jobID, jobCollection, jobModel));
+                        resolve(new JobExecutorPython(jobID, postgresClient, jobCollection, jobModel));
                         break;
                     // TODO: Other type of executions which can be activated later in OPAL.
                     // case Constants.EAE_JOB_TYPE_PIP:

@@ -54,9 +54,10 @@ test('Wrong job_id must throw 500', function (done) {
 
 test('Create dummy job & start running', function(done) {
     ts.createJob(eaeutils.Constants.EAE_JOB_TYPE_PYTHON2, {
-        startDate: new Date("2016-01-01"),
-        endDate: new Date("2016-12-31"),
+        startDate: new Date("2012-01-01"),
+        endDate: new Date("2012-01-31"),
         params: {},
+        sample: 0.2,
         algorithmName: 'density',
         resolution: 'location_level_1',
         keySelector: null
@@ -158,9 +159,10 @@ test('Cancel job on idle compute, check error', function(done) {
 test('Create a new job & start running', function(done) {
     expect.assertions(6);
     ts.createJob(eaeutils.Constants.EAE_JOB_TYPE_PYTHON2, {
-        startDate: new Date("2016-01-01"),
-        endDate: new Date("2016-12-31"),
+        startDate: new Date('2012-01-01'),
+        endDate: new Date('2012-12-31'),
         params: {},
+        sample: 0.2,
         algorithmName: 'density',
         resolution: 'location_level_1',
         keySelector: null
@@ -217,7 +219,7 @@ test('Check the new job is running', function(done) {
                 done();
             }
         );
-    }, 1000); // 1 seconds
+    }, 10000); // 1 seconds
 });
 
 test('Cancel running job', function(done) {
@@ -272,19 +274,19 @@ test('Check compute is idle after 1 sec', function(done) {
                 done();
             }
         );
-    }, 10000); // 3 Sec
+    }, 1000); // 3 Sec
 });
 
-test('Delete cancel job', function(done) {
-    expect.assertions(1);
-    ts.deleteJob(g_job).then(function(result) {
-        expect(result).toBeTruthy();
-        g_job = null;
-        done();
-    }, function(error) {
-        done.fail(error.toString());
-    });
-});
+// test('Delete cancel job', function(done) {
+//     expect.assertions(1);
+//     ts.deleteJob(g_job).then(function(result) {
+//         expect(result).toBeTruthy();
+//         g_job = null;
+//         done();
+//     }, function(error) {
+//         done.fail(error.toString());
+//     });
+// });
 
 
 afterAll(function() {
