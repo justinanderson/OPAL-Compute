@@ -8,10 +8,11 @@ const JobExecutorFactory = require('./jobExecutorFactory.js');
  * @param statusHelper Status helper class
  * @constructor
  */
-function JobController(jobCollection, statusHelper) {
+function JobController(postgresClient, jobCollection, statusHelper) {
     this._jobCollection = jobCollection;
     this._status_helper = statusHelper;
     this._jobExecFactory = new JobExecutorFactory();
+    this._postgresClient = postgresClient;
     this._executor = undefined;
 
     this.runJob = JobController.prototype.runJob.bind(this);
@@ -43,7 +44,7 @@ JobController.prototype.runJob = function(req, res) {
     _this._status_helper.setStatus(Constants.EAE_SERVICE_STATUS_BUSY);
 
     // Create executor based on type
-    _this._jobExecFactory.createFromId(job_id, _this._jobCollection).then(function(executor) {
+    _this._jobExecFactory.createFromId(job_id, _this._postgresClient, _this._jobCollection).then(function(executor) {
         _this._executor = executor;
         // Trigger asynchronous execution
         res.status(200);

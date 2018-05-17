@@ -16,8 +16,8 @@ const { ErrorHelper } = require('eae-utils');
  * @param jobModel {Object} Plain js Job model from the mongoDB, optional if fetchModel is called
  * @constructor
  */
-function JobExecutorPython(jobID, jobCollection, jobModel) {
-    JobExecutorAbstract.call(this, jobID, jobCollection, jobModel);
+function JobExecutorPython(jobID, postgresClient, jobCollection, jobModel) {
+    JobExecutorAbstract.call(this, jobID, postgresClient, jobCollection, jobModel);
     this._tmpDirectory = null;
 
     // Bind member functions
@@ -72,7 +72,6 @@ JobExecutorPython.prototype._preExecution = function() {
  */
 JobExecutorPython.prototype._postExecution = function() {
     return new Promise(function (resolve) {
-        // TODO: Send request to Aggregation that execution is done.
         resolve(true);
     });
 };

@@ -86,4 +86,4 @@ RUN sudo cat /root/.npm/_logs/*; exit 0;
 RUN cp ./src /home/opal/app/src
 RUN cp ./config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
 
-EXPOSE 8001
+EXPOSE 80

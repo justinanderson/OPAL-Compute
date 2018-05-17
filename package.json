@@ -45,6 +45,7 @@
         "fs-extra": "^5.0.0",
         "mongodb": "^2.2.34",
         "opal-utils": "git+https://github.com/OPAL-Project/OPAL-Utils.git",
-        "axios": "^0.18.0"
+        "axios": "^0.18.0",
+        "pg": "^7.4.3"
     }
 }

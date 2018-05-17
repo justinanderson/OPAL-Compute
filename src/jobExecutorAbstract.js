@@ -16,12 +16,12 @@ const url = require('url');
  * @param jobModel {Object} Plain js Job model from the mongoDB, optional if fetchModel is called
  * @constructor
  */
-function JobExecutorAbstract(jobID, jobCollection, jobModel) {
+function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
     this._jobID = new ObjectID(jobID);
     this._jobCollection = jobCollection;
     this._model = jobModel;
     this._callback = null;
-    this._dataFetcher = new DataFetcher();
+    this._dataFetcher = new DataFetcher(postgresClient);
     this._tmpDirectory = null;
     this._child_process = null;
     this._dataDir = null;
@@ -130,8 +130,8 @@ JobExecutorAbstract.prototype.fetchData = function () {
                 _this._model.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
                 _this.pushModel().then(
                     function(){
-                        _this._dataFetcher.fetchDataFromServer(_this._model.params.startDate, _this._model.params.endDate, _this._dataDir).then(
-                            function (dataDir) {
+                        _this._dataFetcher.fetchDataFromServer(_this._model.params.startDate, _this._model.params.endDate, _this._model.params.sample, _this._dataDir)
+                            .then(function (dataDir) {
                                 resolve(dataDir);
                             }, function (error) {
                                 reject(error);
@@ -314,7 +314,7 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
 JobExecutorAbstract.prototype._kill = function() {
     let _this = this;
 
-    if (_this._child_process !== undefined) {
+    if (_this._child_process !== undefined && _this._child_process !== null) {
         _this._child_process.kill(_this._kill_signal);
     }
 };
