@@ -17,9 +17,7 @@ services:
         links:
             - mongodb
         ports:
-            - 3001:3001
-        expose:
-            - 3001
+            - "3001:80"
         command: sh -c './src/wait-for.sh mongodb:27017 -- npm start'
 
     aggandprivacy:
@@ -29,9 +27,7 @@ services:
         links:
             - mongodb
         ports:
-            - 9001:9001
-        expose:
-            - 9001
+            - "9001:80"
         command: sh -c './src/wait-for.sh mongodb:27017 -- npm start'
 
     tests:
@@ -50,7 +46,7 @@ services:
             - aggandprivacy
         privileged: true
         ports:
-            - 80:80
+            - "80:80"
 #        command: sh -c 'mkdir /tmp/codejail-test/ && cp ./test/unlim.py /tmp/codejail-test/ && /usr/venv/sandbox/bin/python /tmp/codejail-test/unlim.py'
         security_opt:
             - apparmor:unconfined
