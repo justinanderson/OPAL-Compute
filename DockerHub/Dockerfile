@@ -83,7 +83,7 @@ RUN npm install --silent; exit 0;
 RUN sudo cat /root/.npm/_logs/*; exit 0;
 
 # Bundle app
-RUN cp -r ./src /home/opal/app/src
-RUN cp -r ./config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
+RUN cp -R ./src /home/opal/app/src
+RUN cp ./config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
 
 EXPOSE 80
