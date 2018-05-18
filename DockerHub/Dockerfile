@@ -80,7 +80,6 @@ RUN cp ./package.json /home/opal/app/
 
 # Bundle app
 RUN cp -R ./src /home/opal/app/src
-RUN cp ./config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
 
 WORKDIR /home/opal/app
 # Install opal-compute npm dependencies
