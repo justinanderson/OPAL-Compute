@@ -73,7 +73,7 @@ USER opal
 RUN sudo ldconfig
 
 # Create app directories
-RUN mkdir -p /home/opal/app && mkdir -p /home/opal/test
+RUN mkdir -p /home/opal/app && mkdir -p /home/opal/test && mkdir -p /home/opal/app/config
 
 # Install app dependencies
 RUN cp ./package.json /home/opal/app/
