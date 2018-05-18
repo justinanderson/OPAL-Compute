@@ -78,14 +78,14 @@ RUN mkdir -p /home/opal/app && mkdir -p /home/opal/test && mkdir -p /home/opal/a
 # Install app dependencies
 RUN cp ./package.json /home/opal/app/
 
-# Install opal-compute npm dependencies
-RUN npm install --silent; exit 0;
-RUN sudo cat /root/.npm/_logs/*; exit 0;
-
 # Bundle app
 RUN cp -R ./src /home/opal/app/src
 RUN cp ./config/opal.compute.test.config.js /home/opal/app/config/opal.compute.config.js
 
 WORKDIR /home/opal/app
+# Install opal-compute npm dependencies
+RUN npm install --silent; exit 0;
+RUN sudo cat /root/.npm/_logs/*; exit 0;
+
 
 EXPOSE 80
