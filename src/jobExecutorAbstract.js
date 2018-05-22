@@ -49,20 +49,27 @@ function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
 
 JobExecutorAbstract.prototype._contactAggregationService = function (event) {
     let _this = this;
-    let aggregationEventUrl =  url.resolve(global.opal_compute_config.opalAggPrivServiceURL, '/' + event + '/');
-    let jobEventUrl = url.resolve(aggregationEventUrl, _this._model._id.toString());
-    let data = {};
-    switch (event){
-        case 'start':
-            data = {
-                aggregationMethod: _this._algorithm.reducer,
-                keySelector: _this._model.params.keySelector
-            };
-            break;
-        default:
-            data = {};
-    }
-    return axios.post(jobEventUrl, data);
+    return new Promise(function (resolve, reject) {
+        let aggregationEventUrl =  url.resolve(global.opal_compute_config.opalAggPrivServiceURL, '/' + event + '/');
+        let jobEventUrl = url.resolve(aggregationEventUrl, _this._model._id.toString());
+        let data = {};
+        switch (event){
+            case 'start':
+                data = {
+                    aggregationMethod: _this._algorithm.reducer,
+                    keySelector: _this._model.params.keySelector
+                };
+                break;
+            default:
+                data = {};
+        }
+        axios.post(jobEventUrl, data).then(
+            function (success) {
+                resolve(success);
+            }, function (error) {
+                reject(error);
+            });
+    });
 };
 
 /**
