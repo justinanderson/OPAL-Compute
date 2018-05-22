@@ -63,10 +63,11 @@ JobExecutorAbstract.prototype._contactAggregationService = function (event) {
             default:
                 data = {};
         }
-        axios.post(jobEventUrl, data).then(
-            function (success) {
+        axios.post(jobEventUrl, data)
+            .then(function (success) {
                 resolve(success);
-            }, function (error) {
+            })
+            .catch(function (error) {
                 reject(error);
             });
     });
