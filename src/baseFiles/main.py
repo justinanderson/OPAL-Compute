@@ -27,9 +27,8 @@ if __name__ == "__main__":
     with open(args.params_json, 'r') as fp:
         params = json.load(fp)
 
-    # use default sampling rate of 1 if not available
-    if 'sample' not in params:
-        params['sample'] = 1
+    # set sample rate as 1
+    params['sample'] = 1
 
     # number of threads for computation is number of cores - 1
     number_of_threads = max(1, multiprocessing.cpu_count() - 1)
