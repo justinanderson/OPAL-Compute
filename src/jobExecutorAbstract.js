@@ -95,9 +95,14 @@ JobExecutorAbstract.prototype.handleExecutionError = function(message, status) {
     _this._model.message = message;
     _this._cleanUp();
     _this.pushModel().then(function() {
-        _this._contactAggregationService('cancel');
-        if (_this._callback !== null && _this._callback !== undefined)
-            _this._callback(message, null);
+        _this._contactAggregationService('cancel').then(function (__unused__success){
+            if (_this._callback !== null && _this._callback !== undefined)
+                _this._callback(message, null);
+        }, function (error) {
+            message = 'Error in cancelling aggregation - ' + error.toString() + '\n' + message;
+            if (_this._callback !== null && _this._callback !== undefined)
+                _this._callback(message, null);
+        });
     }, function(error) {
         message = 'Error in pushing model - ' + error.toString() + '\n' + message;
         if (_this._callback !== null && _this._callback !== undefined)
@@ -244,13 +249,19 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
     let end_fn = function(status, code, message = '') {
         let save_fn = function() {
             _this.pushModel().then(function(success) {
+                let aggregationCall = null;
                 if (status === Constants.EAE_JOB_STATUS_DONE){
-                    _this._contactAggregationService('finish');
+                    aggregationCall = 'finish';
                 } else {
-                    _this._contactAggregationService('cancel');
+                    aggregationCall = 'cancel';
                 }
-                if (_this._callback !== null && _this._callback !== undefined)
-                    _this._callback(null, success.status);
+                _this._contactAggregationService(aggregationCall).then(function (__unused__success) {
+                    if (_this._callback !== null && _this._callback !== undefined)
+                        _this._callback(null, success.status);
+                }, function (error) {
+                    if (_this._callback !== null && _this._callback !== undefined)
+                        _this._callback(error, null);
+                });
             }, function(error) {
                 if (_this._callback !== null && _this._callback !== undefined)
                     _this._callback(error, null);
