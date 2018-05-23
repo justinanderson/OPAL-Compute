@@ -7,5 +7,7 @@ module.exports = {
 	enableCors: true,
     computeType: [Constants.EAE_COMPUTE_TYPE_PYTHON2],
     opalAlgoServiceURL: '',
-    opalAggPrivServiceURL: ''
+    opalAggPrivServiceURL: '',
+    opalalgoSandboxVenv: '/usr/venv/sandbox',
+    opalalgoSandboxUser: 'sandbox'
 };
