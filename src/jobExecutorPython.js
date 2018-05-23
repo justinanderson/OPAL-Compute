@@ -98,7 +98,7 @@ JobExecutorPython.prototype.startExecution = function(callback) {
                 let args = ['main.py --data_dir input --algorithm_json algorithm.json --params_json params.json'];
                 let opts = {
                     cwd: _this._tmpDirectory,
-                    end: process.env,
+                    env: process.env,
                     shell: true
                 };
                 _this._exec(cmd, args, opts);

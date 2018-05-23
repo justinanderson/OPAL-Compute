@@ -27,6 +27,7 @@ function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
     this._dataDir = null;
     this._algorithm = null;
     this._kill_signal = 'SIGINT';
+    this._aggregationStarted = false;
 
     // Bind member functions
     this.fetchData = JobExecutorAbstract.prototype.fetchData.bind(this);
@@ -59,8 +60,14 @@ JobExecutorAbstract.prototype._contactAggregationService = function (event) {
                     aggregationMethod: _this._algorithm.reducer,
                     keySelector: _this._model.params.keySelector
                 };
+                _this._aggregationStarted = true;
                 break;
             default:
+                if (!_this._aggregationStarted) {
+                    resolve(true);
+                    return;
+                }
+                _this._aggregationStarted = false;
                 data = {};
         }
         axios.post(jobEventUrl, data)
