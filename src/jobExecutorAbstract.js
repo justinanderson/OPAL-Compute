@@ -1,5 +1,6 @@
 const ObjectID = require('mongodb').ObjectID;
 const { ErrorHelper, Constants } = require('eae-utils');
+const { Constants_Opal } = require('opal-utils');
 const child_process = require('child_process');
 const DataFetcher = require('./dataFetcher.js');
 const fs = require('fs');
@@ -39,6 +40,7 @@ function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
     this.fetchAlgorithm = JobExecutorAbstract.prototype.fetchAlgorithm.bind(this);
     this._cleanUp = JobExecutorAbstract.prototype._cleanUp.bind(this);
     this._contactAggregationService = JobExecutorAbstract.prototype._contactAggregationService.bind(this);
+    this._getAggregationServiceUrl = JobExecutorAbstract.prototype._getAggregationServiceUrl.bind(this);
 
     // Bind pure member functions
     this._preExecution = JobExecutorAbstract.prototype._preExecution.bind(this);
@@ -48,11 +50,18 @@ function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
 }
 
 
+JobExecutorAbstract.prototype._getAggregationServiceUrl = function (event) {
+    let _this = this;
+
+    let aggregationEventUrl =  url.resolve(global.opal_compute_config.opalAggPrivServiceURL, '/' + event + '/');
+    let jobEventUrl = url.resolve(aggregationEventUrl, _this._model._id.toString());
+    return jobEventUrl;
+}
+
+
 JobExecutorAbstract.prototype._contactAggregationService = function (event) {
     let _this = this;
     return new Promise(function (resolve, reject) {
-        let aggregationEventUrl =  url.resolve(global.opal_compute_config.opalAggPrivServiceURL, '/' + event + '/');
-        let jobEventUrl = url.resolve(aggregationEventUrl, _this._model._id.toString());
         let data = {};
         switch (event){
             case 'start':
@@ -70,7 +79,7 @@ JobExecutorAbstract.prototype._contactAggregationService = function (event) {
                 _this._aggregationStarted = false;
                 data = {};
         }
-        axios.post(jobEventUrl, data)
+        axios.post(_this._getAggregationServiceUrl(event), data)
             .then(function (success) {
                 resolve(success);
             })
@@ -250,7 +259,7 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
         let save_fn = function() {
             _this.pushModel().then(function(success) {
                 let aggregationCall = null;
-                if (status === Constants.EAE_JOB_STATUS_DONE){
+                if (status === Constants_Opal.OPAL_JOB_STATUS_PRIVACY){
                     aggregationCall = 'finish';
                 } else {
                     aggregationCall = 'cancel';
@@ -309,7 +318,7 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
                     _this._child_process.on('exit', function (code, signal) {
                         if (code !== null) { // Successful run or interruption
                             if (code === 0){
-                                end_fn(Constants.EAE_JOB_STATUS_DONE, code, 'Exit success');
+                                end_fn(Constants_Opal.OPAL_JOB_STATUS_PRIVACY, code, 'Exit success');
                             } else {
                                 _this.handleExecutionError('Error in execution');
                             }

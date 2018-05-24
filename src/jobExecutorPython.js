@@ -46,10 +46,9 @@ JobExecutorPython.prototype._preExecution = function() {
                 fs.copyFileSync(path.join(__dirname, 'baseFiles/main.py'), path.join(_this._tmpDirectory, 'main.py'));
                 fse.outputJson(path.join(_this._tmpDirectory, 'algorithm.json'), algorithm).then(function () {
                     let model_params = (_this._model.params !== undefined && _this._model.params !== null) ? _this._model.params : {};
-                    let aggregationUpdateUrl = url.resolve(global.opal_compute_config.opalAggPrivServiceURL, '/update/');
-                    let jobUpdateUrl = url.resolve(aggregationUpdateUrl, _this._model._id.toString());
-                    model_params['aggregationServiceUrl'] = jobUpdateUrl;
+                    model_params['aggregationServiceUrl'] = _this._getAggregationServiceUrl('update');
                     fse.outputJson(path.join(_this._tmpDirectory, 'params.json'), model_params).then(function () {
+                        delete model_params.aggregationServiceUrl;
                         resolve(true);
                     }, function (error) {
                         reject(ErrorHelper('Unable to save params', error));

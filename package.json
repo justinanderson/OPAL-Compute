@@ -39,13 +39,13 @@
         "request": "^2.83.0"
     },
     "dependencies": {
+        "axios": "^0.18.0",
         "body-parser": "^1.18.2",
         "eae-utils": "git+https://github.com/dsi-icl/eae-utils.git",
         "express": "^4.16.2",
         "fs-extra": "^5.0.0",
         "mongodb": "^2.2.34",
         "opal-utils": "git+https://github.com/OPAL-Project/OPAL-Utils.git",
-        "axios": "^0.18.0",
         "pg": "^7.4.3"
     }
 }
