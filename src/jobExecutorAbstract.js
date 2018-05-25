@@ -56,7 +56,7 @@ JobExecutorAbstract.prototype._getAggregationServiceUrl = function (event) {
     let aggregationEventUrl =  url.resolve(global.opal_compute_config.opalAggPrivServiceURL, '/' + event + '/');
     let jobEventUrl = url.resolve(aggregationEventUrl, _this._model._id.toString());
     return jobEventUrl;
-}
+};
 
 
 JobExecutorAbstract.prototype._contactAggregationService = function (event) {

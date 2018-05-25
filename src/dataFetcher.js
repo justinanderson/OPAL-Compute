@@ -1,7 +1,6 @@
 // Data fetcher module
 // const { ErrorHelper, Constants } = require('eae-utils');
 const fs = require('fs-extra');
-let config = require('../config/opal.compute.config.js');
 const { ErrorHelper } =  require('eae-utils');
 const path = require('path');
 

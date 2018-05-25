@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const fse = require('fs-extra');
 const {Constants} = require('eae-utils');
-const url = require('url');
 
 const JobExecutorAbstract = require('./jobExecutorAbstract.js');
 const { ErrorHelper } = require('eae-utils');
