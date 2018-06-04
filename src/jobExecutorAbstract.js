@@ -21,7 +21,6 @@ function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
     this._jobCollection = jobCollection;
     this._model = jobModel;
     this._callback = null;
-    this._dataFetcher = new DataFetcher(postgresClient);
     this._tmpDirectory = null;
     this._child_process = null;
     this._dataDir = null;
