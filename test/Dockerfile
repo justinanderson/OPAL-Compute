@@ -35,7 +35,8 @@ RUN rm -rf /etc/apparmor.d/docker-engine
 # Install python library required
 RUN pip install git+https://github.com/OPAL-Project/codejail.git \
     && pip install git+https://github.com/emalgorithm/bandicoot.git \
-    && pip install git+https://github.com/OPAL-Project/opalalgorithms.git
+    && pip install git+https://github.com/OPAL-Project/opalalgorithms.git \
+    && pip install python-dateutil psycopg2
 
 # Creating virtualenv for sandbox
 RUN mkdir /usr/venv
@@ -48,6 +49,7 @@ RUN /bin/bash -c "source /usr/venv/sandbox/bin/activate \
     && pip install git+https://github.com/emalgorithm/bandicoot.git \
     && pip install git+https://github.com/OPAL-Project/codejail.git \
     && pip install git+https://github.com/OPAL-Project/opalalgorithms.git \
+    && pip install python-dateutil \
     && deactivate"
 
 # create a sandbox user

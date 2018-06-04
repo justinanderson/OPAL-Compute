@@ -2,7 +2,6 @@ const ObjectID = require('mongodb').ObjectID;
 const { ErrorHelper, Constants } = require('eae-utils');
 const { Constants_Opal } = require('opal-utils');
 const child_process = require('child_process');
-const DataFetcher = require('./dataFetcher.js');
 const fs = require('fs');
 const fse = require('fs-extra');
 const path = require('path');
@@ -29,9 +28,10 @@ function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
     this._algorithm = null;
     this._kill_signal = 'SIGINT';
     this._aggregationStarted = false;
+    this._executionChecker = null;
 
     // Bind member functions
-    this.fetchData = JobExecutorAbstract.prototype.fetchData.bind(this);
+    this.setupDir = JobExecutorAbstract.prototype.setupDir.bind(this);
     this.fetchModel = JobExecutorAbstract.prototype.fetchModel.bind(this);
     this.pushModel = JobExecutorAbstract.prototype.pushModel.bind(this);
     this._exec = JobExecutorAbstract.prototype._exec.bind(this);
@@ -41,6 +41,8 @@ function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
     this._cleanUp = JobExecutorAbstract.prototype._cleanUp.bind(this);
     this._contactAggregationService = JobExecutorAbstract.prototype._contactAggregationService.bind(this);
     this._getAggregationServiceUrl = JobExecutorAbstract.prototype._getAggregationServiceUrl.bind(this);
+    this._checkExecutionBegan = JobExecutorAbstract.prototype._checkExecutionBegan.bind(this);
+    this._cleanExecutionBeganChecker = JobExecutorAbstract.prototype._cleanExecutionBeganChecker.bind(this);
 
     // Bind pure member functions
     this._preExecution = JobExecutorAbstract.prototype._preExecution.bind(this);
@@ -137,14 +139,15 @@ JobExecutorAbstract.prototype._cleanUp = function () {
     if (_this._tmpDirectory !== undefined && _this._tmpDirectory !== null) {
         fse.removeSync(_this._tmpDirectory);
     }
+    _this._cleanExecutionBeganChecker();
 };
 
 /**
- * @fn fetchData
- * @desc Fetch data from the server and save in a tmpdir folder path.
+ * @fn setupDir
+ * @desc Setup tmpdir and add a data input folder for computation.
  * @return {Promise} resolves to directory where data is saved.
  */
-JobExecutorAbstract.prototype.fetchData = function () {
+JobExecutorAbstract.prototype.setupDir = function () {
     let _this = this;
 
     // Create tmp directory and fetch data
@@ -157,20 +160,48 @@ JobExecutorAbstract.prototype.fetchData = function () {
                 _this._dataDir = path.join(_this._tmpDirectory, 'input');
 
                 _this._model.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
-                _this.pushModel().then(
-                    function(){
-                        _this._dataFetcher.fetchDataFromServer(_this._model.params.startDate, _this._model.params.endDate, _this._model.params.sample, _this._dataDir)
-                            .then(function (dataDir) {
-                                resolve(dataDir);
-                            }, function (error) {
-                                reject(error);
-                            });
-                    }, function (error) {
-                        reject(error);
-                    });
+                fse.ensureDir(_this._dataDir).then(function () {
+                    _this.pushModel().then(
+                        function () {
+                            resolve(_this._dataDir);
+                        }, function (error) {
+                            reject(error);
+                        });
+                }, function(error) {
+                    reject(error);
+                });
             }
         });
     });
+};
+
+/**
+ * @fn _checkExecutionBegan
+ * @desc Check if execution has begun by monitoring the
+ * @private
+ */
+JobExecutorAbstract.prototype._checkExecutionBegan = function () {
+    let _this = this;
+
+    let runFilePath = path.join(_this._dataDir, 'run.txt');
+    if (fs.existsSync(runFilePath)) {
+        _this._model.status.unshift(Constants.EAE_JOB_STATUS_RUNNING);
+        _this.pushModel().then(function (__unused__success) {
+            // eslint-disable-next-line no-console
+            console.log(_this._jobID + ' started execution.');
+            _this._cleanExecutionBeganChecker();
+        }, function(__unused__error) {
+        });
+    }
+};
+
+
+JobExecutorAbstract.prototype._cleanExecutionBeganChecker = function () {
+    let _this = this;
+    if (_this._executionChecker !== null && _this._executionChecker !== undefined){
+        clearInterval(_this._executionChecker);
+        _this._executionChecker = null;
+    }
 };
 
 
@@ -297,6 +328,7 @@ JobExecutorAbstract.prototype._exec = function(command, args, options) {
             function (response) {
                 if (response.status === 200){
                     // Fork a process on the machine
+                    _this._executionChecker = setInterval(_this._checkExecutionBegan, 1000);
                     _this._child_process = child_process.spawn(command, args, options);
 
                     // Stores stdout

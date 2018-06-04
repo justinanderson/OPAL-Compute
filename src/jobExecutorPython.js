@@ -86,16 +86,17 @@ JobExecutorPython.prototype.startExecution = function(callback) {
 
     _this.fetchModel().then(function () {
         _this._model.startDate = new Date();
-        _this.fetchData().then(function (__unused__dataDir) {
+        _this.setupDir().then(function (__unused__dataDir) {
             // Clean model for execution
             _this._model.stdout = '';
             _this._model.stderr = '';
-            _this._model.status.unshift(Constants.EAE_JOB_STATUS_RUNNING);
             process.env['OPALALGO_SANDBOX_VENV'] = global.opal_compute_config.opalalgoSandboxVenv;
             process.env['OPALALGO_SANDBOX_USER'] = global.opal_compute_config.opalalgoSandboxUser;
             _this.pushModel().then(function() {
                 let cmd = 'python';
-                let args = ['main.py --data_dir input --algorithm_json algorithm.json --params_json params.json'];
+                let args = ['-W ignore main.py --data_dir input --algorithm_json algorithm.json ' +
+                            '--params_json params.json --db ' + global.opal_compute_config.timescaleURL +
+                            ' --max_users_per_fetch ' + global.opal_compute_config.maxUsersPerFetch.toString()];
                 let opts = {
                     cwd: _this._tmpDirectory,
                     env: process.env,
