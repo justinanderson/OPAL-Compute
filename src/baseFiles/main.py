@@ -148,12 +148,15 @@ if __name__ == "__main__":
         params = json.load(fp)
 
     salt = get_salt(16)
-    start_date = dateutil.parser.parse(params["startDate"])
+        start_date = dateutil.parser.parse(params["startDate"])
     end_date = dateutil.parser.parse(params["endDate"])
     required_users = fetch_users(args.db, start_date, end_date, params['sample'])
 
-    pool = multiprocessing.Pool(processes=1)
+    num_users = len(required_users)
+    batch_size = args.max_users_per_fetch if num_users <= args.max_users_per_fetch else num_users // 2 + 1
     user_chunks = get_chunks(required_users, args.max_users_per_fetch)
+
+    pool = multiprocessing.Pool(processes=1)
     jobs = []
     for chunk in user_chunks:
         jobs.append(pool.apply_async(fetch_data, (args.db, start_date, end_date, chunk, args.data_dir, salt)))
