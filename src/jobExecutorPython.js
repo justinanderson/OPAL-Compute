@@ -96,7 +96,8 @@ JobExecutorPython.prototype.startExecution = function(callback) {
                 let cmd = 'python';
                 let args = ['-W ignore main.py --data_dir input --algorithm_json algorithm.json ' +
                             '--params_json params.json --db ' + global.opal_compute_config.timescaleURL +
-                            ' --max_users_per_fetch ' + global.opal_compute_config.maxUsersPerFetch.toString()];
+                            ' --max_users_per_fetch ' + global.opal_compute_config.maxUsersPerFetch.toString() +
+                            ' --max_cores ' + global.opal_compute_config.maxCores.toString()];
                 let opts = {
                     cwd: _this._tmpDirectory,
                     env: process.env,

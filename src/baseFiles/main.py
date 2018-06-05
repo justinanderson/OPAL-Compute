@@ -23,7 +23,7 @@ parser.add_argument('--params_json', required=True,
                     help='JSON file for params')
 parser.add_argument('--db', required=True,
                     help='Database name.')
-parser.add_argument('--max_cores', default=multiprocessing.cpu_count() - 1, type=int,
+parser.add_argument('--max_cores', default=multiprocessing.cpu_count() - 2, type=int,
                     help='Max cores to be used for processing')
 parser.add_argument('--max_users_per_fetch', default=3000, type=int,
                     help='Max users to be fetched in per call from db.')
