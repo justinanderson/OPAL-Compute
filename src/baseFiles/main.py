@@ -148,7 +148,7 @@ if __name__ == "__main__":
         params = json.load(fp)
 
     salt = get_salt(16)
-        start_date = dateutil.parser.parse(params["startDate"])
+    start_date = dateutil.parser.parse(params["startDate"])
     end_date = dateutil.parser.parse(params["endDate"])
     required_users = fetch_users(args.db, start_date, end_date, params['sample'])
 
