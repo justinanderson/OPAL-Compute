@@ -153,8 +153,10 @@ if __name__ == "__main__":
     required_users = fetch_users(args.db, start_date, end_date, params['sample'])
 
     num_users = len(required_users)
-    batch_size = args.max_users_per_fetch if num_users <= args.max_users_per_fetch else num_users // 2 + 1
-    user_chunks = get_chunks(required_users, args.max_users_per_fetch)
+    # ignoring max_users_per_fetch
+    # batch_size = args.max_users_per_fetch if num_users <= args.max_users_per_fetch else num_users // 2 + 1
+    batch_size = num_users + 1
+    user_chunks = get_chunks(required_users, batch_size)
 
     pool = multiprocessing.Pool(processes=1)
     jobs = []
