@@ -78,8 +78,8 @@ def fetch_data(db, start_date, end_date, required_users, data_dir, salt):
         'location_level_1': 8,
         'location_level_2': 9
     }
-
-    for row in cur:
+    all_data = cur.fetchall()
+    for row in all_data:
         username = row[3]
         if username not in user2data:
             user2data[username] = [data_col.keys()]
@@ -93,6 +93,7 @@ def fetch_data(db, start_date, end_date, required_users, data_dir, salt):
                 val = val.strftime('%Y-%m-%d %H:%M:%S')
             row_data.append(val)
         user2data[username].append(row_data)
+    cur.close()
     temp_data_dir = os.path.join(data_dir, get_salt(16))
     os.mkdir(temp_data_dir)
     for key, val in user2data.iteritems():
@@ -165,5 +166,5 @@ if __name__ == "__main__":
     pool.close()
     for job in jobs:
         data_dir = job.get()
-        run_algo(algorithm, params, data_dir, args.max_cores)
+        # run_algo(algorithm, params, data_dir, args.max_cores)
     pool.join()
