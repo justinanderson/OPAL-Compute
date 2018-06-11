@@ -93,7 +93,7 @@ JobExecutorPython.prototype.startExecution = function(callback) {
             process.env['OPALALGO_SANDBOX_VENV'] = global.opal_compute_config.opalalgoSandboxVenv;
             process.env['OPALALGO_SANDBOX_USER'] = global.opal_compute_config.opalalgoSandboxUser;
             _this.pushModel().then(function() {
-                let cmd = 'python';
+                let cmd = 'python3';
                 let args = ['-W ignore main.py --data_dir input --algorithm_json algorithm.json ' +
                             '--params_json params.json --db ' + global.opal_compute_config.timescaleURL +
                             ' --max_users_per_fetch ' + global.opal_compute_config.maxUsersPerFetch.toString() +

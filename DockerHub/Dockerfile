@@ -10,8 +10,10 @@ RUN apt-get install -y dialog apt-utils
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get upgrade -y --no-install-recommends
+RUN apt-get update -q
 
-RUN apt-get install -y python-pip python-dev gcc
+RUN apt-get install -y gcc python-pip python-dev
+RUN apt-get install -y python3.5-dev python3-pip
 RUN apt-get install -y apparmor apparmor-profiles apparmor-utils
 RUN apt-get install -y netcat
 RUN apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*
@@ -22,6 +24,7 @@ RUN apt-get install -y libpthread-stubs0-dev
 
 RUN apt-get install -y curl
 
+RUN pip3 install --upgrade pip
 RUN pip install --upgrade pip
 
 # install node
@@ -33,15 +36,15 @@ RUN apt-get install -y build-essential
 RUN rm -rf /etc/apparmor.d/docker-engine
 
 # Install python library required
-RUN pip install git+https://github.com/OPAL-Project/codejail.git \
-    && pip install git+https://github.com/emalgorithm/bandicoot.git \
-    && pip install git+https://github.com/OPAL-Project/opalalgorithms.git \
-    && pip install python-dateutil psycopg2
+RUN pip3 install git+https://github.com/OPAL-Project/codejail.git \
+    && pip3 install git+https://github.com/emalgorithm/bandicoot.git \
+    && pip3 install git+https://github.com/OPAL-Project/opalalgorithms.git \
+    && pip3 install python-dateutil psycopg2 asyncpg
 
 # Creating virtualenv for sandbox
 RUN mkdir /usr/venv
 RUN pip install virtualenv \
-    && virtualenv /usr/venv/sandbox \
+    && virtualenv --python=/usr/bin/python2.7 /usr/venv/sandbox \
     && chmod +x /usr/venv/sandbox/bin/activate
 
 # install libraries in virtualenv
@@ -60,13 +63,13 @@ RUN git clone -b master https://github.com/OPAL-Project/OPAL-Compute
 WORKDIR /root/OPAL-Compute
 
 # setup restricted environment
-RUN cp ./setupScripts/usr.venv.sandbox.bin.python /etc/apparmor.d/
+RUN cp ./setupScripts/usr.venv.sandbox.bin.python2.7 /etc/apparmor.d/
 RUN cp ./setupScripts/95-sandbox /etc/sudoers.d/
 
 # create a sandbox user
 RUN useradd -ms /bin/bash sandbox
 
-RUN echo "#!/bin/bash\nsudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python" > /usr/bin/apparmor_init && \
+RUN echo "#!/bin/bash\nsudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python2.7" > /usr/bin/apparmor_init && \
     chmod +x /usr/bin/apparmor_init
 
 RUN useradd -ms /bin/bash opal

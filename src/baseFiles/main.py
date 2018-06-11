@@ -11,6 +11,8 @@ import random
 import csv
 import os
 import datetime
+import asyncio
+import asyncpg
 
 
 parser = configargparse.ArgumentParser(
@@ -47,56 +49,60 @@ def fetch_users(db, start_date, end_date, sample=1):
     return required_users
 
 
-def fetch_data(db, start_date, end_date, required_users, data_dir, salt):
-    """Fetch data of users from start date to end date and save as csv in data directory."""
-    conn = psycopg2.connect(db)
-    cur = conn.cursor()
-    cur.execute(
+async def fetch_data_async(db, start_date, end_date, required_users, data_dir, salt):
+    """Fetch data asynchronously."""
+    conn = await asyncpg.connect(db)
+    stmt = await conn.prepare(
         """
         SELECT event_time as datetime, interaction_type as interaction,
-        interaction_direction as direction, md5(CONCAT(emiter_id, %s)) as emiter_id,
-        md5(CONCAT(receiver_id, %s)) as correspondent_id, telecomdata.antenna_id as antenna_id,
+        interaction_direction as direction, md5(CONCAT(emiter_id, $1::text)) as emiter_id,
+        md5(CONCAT(receiver_id, $2::text)) as correspondent_id, telecomdata.antenna_id as antenna_id,
         latitude, longitude, location_level_1, location_level_2,
         duration as call_duration FROM public.opal as telecomdata
         INNER JOIN public.antenna_records as antenna_records
         ON (telecomdata.antenna_id=antenna_records.antenna_id AND
         telecomdata.event_time >= antenna_records.date_from AND
         telecomdata.event_time <= antenna_records.date_to)
-        WHERE telecomdata.event_time >= %s and telecomdata.event_time <= %s and telecomdata.emiter_id = ANY(%s);
-        """,
-        (salt, salt, start_date, end_date, required_users))
+        WHERE telecomdata.event_time >= $3 and telecomdata.event_time <= $4 and telecomdata.emiter_id = ANY($5);
+        """)
     user2data = {}
-    data_col = {
-        'interaction': 1,
-        'direction': 2,
-        'correspondent_id': 4,
-        'datetime': 0,
-        'call_duration': 10,
-        'antenna_id': 5,
-        'latitude': 6,
-        'longitude': 7,
-        'location_level_1': 8,
-        'location_level_2': 9
-    }
-    all_data = cur.fetchall()
-    for row in all_data:
-        username = row[3]
-        if username not in user2data:
-            user2data[username] = [data_col.keys()]
-        row_data = []
-        for key in data_col.keys():
-            idx = data_col[key]
-            val = row[idx]
-            if isinstance(val, str):
-                val = val.strip()
-            elif isinstance(val, datetime.datetime):
-                val = val.strftime('%Y-%m-%d %H:%M:%S')
-            row_data.append(val)
-        user2data[username].append(row_data)
-    cur.close()
+    data_col = [
+        'interaction',
+        'direction',
+        'correspondent_id',
+        'datetime',
+        'call_duration',
+        'antenna_id',
+        'latitude',
+        'longitude',
+        'location_level_1',
+        'location_level_2'
+    ]
+    async with conn.transaction():
+        # Postgres requires non-scrollable cursors to be created
+        # and used in a transaction.
+
+        # Execute the prepared statement passing `10` as the
+        # argument -- that will generate a series or records
+        # from 0..10.  Iterate over all of them and print every
+        # record.
+        async for record in stmt.cursor(salt, salt, start_date, end_date, required_users):
+            username = record['emiter_id']
+            if username not in user2data:
+                user2data[username] = [data_col]
+            row_data = []
+            for key in data_col:
+                val = record[key]
+                if isinstance(val, str):
+                    val = val.strip()
+                elif isinstance(val, datetime.datetime):
+                    val = val.strftime('%Y-%m-%d %H:%M:%S')
+                row_data.append(val)
+            user2data[username].append(row_data)
+    conn.close()
     temp_data_dir = os.path.join(data_dir, get_salt(16))
     os.mkdir(temp_data_dir)
-    for key, val in user2data.iteritems():
+    for key, val in user2data.items():
         csv_file = os.path.join(temp_data_dir, key + '.csv')
         with open(csv_file, 'w') as fp:
             csv_writer = csv.writer(fp)
@@ -107,6 +113,13 @@ def fetch_data(db, start_date, end_date, required_users, data_dir, salt):
     with open(os.path.join(data_dir, 'run.txt'), 'w') as fp:
         fp.write('Execution started')
     return temp_data_dir
+
+
+def fetch_data(db, start_date, end_date, required_users, data_dir, salt):
+    data_dir = asyncio.get_event_loop().run_until_complete(
+        fetch_data_async(
+            db, start_date, end_date, required_users, data_dir, salt))
+    return data_dir
 
 
 def get_salt(len):
@@ -158,7 +171,6 @@ if __name__ == "__main__":
     # batch_size = args.max_users_per_fetch if num_users <= args.max_users_per_fetch else num_users // 2 + 1
     batch_size = num_users + 1
     user_chunks = get_chunks(required_users, batch_size)
-
     pool = multiprocessing.Pool(processes=1)
     jobs = []
     for chunk in user_chunks:
@@ -166,5 +178,5 @@ if __name__ == "__main__":
     pool.close()
     for job in jobs:
         data_dir = job.get()
-        # run_algo(algorithm, params, data_dir, args.max_cores)
+        run_algo(algorithm, params, data_dir, args.max_cores)
     pool.join()
