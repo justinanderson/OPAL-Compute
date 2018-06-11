@@ -49,7 +49,7 @@ def fetch_users(db, start_date, end_date, sample=1):
     return required_users
 
 
-async def fetch_data_async(db, start_date, end_date, required_users, data_dir, salt):
+async def fetch_data_async(db, start_date, end_date, required_users, salt):
     """Fetch data asynchronously."""
     conn = await asyncpg.connect(db)
     stmt = await conn.prepare(
@@ -82,10 +82,9 @@ async def fetch_data_async(db, start_date, end_date, required_users, data_dir, s
         # Postgres requires non-scrollable cursors to be created
         # and used in a transaction.
 
-        # Execute the prepared statement passing `10` as the
-        # argument -- that will generate a series or records
-        # from 0..10.  Iterate over all of them and print every
-        # record.
+        # Execute the prepared statement passing arguments
+        # that will generate a series or records for the query.
+        # Iterate over all of them and print every record.
         async for record in stmt.cursor(salt, salt, start_date, end_date, required_users):
             username = record['emiter_id']
             if username not in user2data:
@@ -99,7 +98,14 @@ async def fetch_data_async(db, start_date, end_date, required_users, data_dir, s
                     val = val.strftime('%Y-%m-%d %H:%M:%S')
                 row_data.append(val)
             user2data[username].append(row_data)
-    conn.close()
+        return user2data
+
+
+def fetch_data(db, start_date, end_date, required_users, data_dir, salt):
+    """Fetch data in asynchronous fashion."""
+    user2data = asyncio.get_event_loop().run_until_complete(
+        fetch_data_async(
+            db, start_date, end_date, required_users, salt))
     temp_data_dir = os.path.join(data_dir, get_salt(16))
     os.mkdir(temp_data_dir)
     for key, val in user2data.items():
@@ -113,13 +119,6 @@ async def fetch_data_async(db, start_date, end_date, required_users, data_dir, s
     with open(os.path.join(data_dir, 'run.txt'), 'w') as fp:
         fp.write('Execution started')
     return temp_data_dir
-
-
-def fetch_data(db, start_date, end_date, required_users, data_dir, salt):
-    data_dir = asyncio.get_event_loop().run_until_complete(
-        fetch_data_async(
-            db, start_date, end_date, required_users, data_dir, salt))
-    return data_dir
 
 
 def get_salt(len):
