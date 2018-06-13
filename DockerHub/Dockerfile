@@ -58,6 +58,7 @@ WORKDIR /root
 RUN git clone -b master https://github.com/OPAL-Project/OPAL-Compute
 
 WORKDIR /root/OPAL-Compute
+RUN git checkout psycopg2
 
 # setup restricted environment
 RUN cp ./setupScripts/usr.venv.sandbox.bin.python /etc/apparmor.d/
