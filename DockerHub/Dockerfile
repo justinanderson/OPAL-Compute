@@ -61,6 +61,7 @@ WORKDIR /root
 RUN git clone -b master https://github.com/OPAL-Project/OPAL-Compute
 
 WORKDIR /root/OPAL-Compute
+RUN git checkout heuristic1
 
 # setup restricted environment
 RUN cp ./setupScripts/usr.venv.sandbox.bin.python2.7 /etc/apparmor.d/
