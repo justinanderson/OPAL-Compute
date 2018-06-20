@@ -58,10 +58,9 @@ RUN /bin/bash -c "source /usr/venv/sandbox/bin/activate \
 WORKDIR /root
 
 # We download the opal compute
-RUN git clone -b master https://github.com/OPAL-Project/OPAL-Compute
+RUN git clone -b heuristic2 https://github.com/OPAL-Project/OPAL-Compute
 
 WORKDIR /root/OPAL-Compute
-RUN git checkout heuristic2
 
 # setup restricted environment
 RUN cp ./setupScripts/usr.venv.sandbox.bin.python2.7 /etc/apparmor.d/
