@@ -58,7 +58,7 @@ RUN /bin/bash -c "source /usr/venv/sandbox/bin/activate \
 WORKDIR /root
 
 # We download the opal compute
-RUN git clone -b master https://github.com/OPAL-Project/OPAL-Compute
+RUN git clone -b onlyfetch https://github.com/OPAL-Project/OPAL-Compute
 
 WORKDIR /root/OPAL-Compute
 

@@ -177,5 +177,5 @@ if __name__ == "__main__":
     pool.close()
     for job in jobs:
         data_dir = job.get()
-        run_algo(algorithm, params, data_dir, args.max_cores)
+        # run_algo(algorithm, params, data_dir, args.max_cores)
     pool.join()
