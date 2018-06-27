@@ -68,7 +68,9 @@ JobExecutorAbstract.prototype._contactAggregationService = function (event) {
             case 'start':
                 data = {
                     aggregationMethod: _this._algorithm.reducer,
-                    keySelector: _this._model.params.keySelector
+                    keySelector: _this._model.params.keySelector,
+                    privacyAlgorithm: _this._algorithm.privacyAlgorithm,
+                    params: _this._model.params
                 };
                 _this._aggregationStarted = true;
                 break;
