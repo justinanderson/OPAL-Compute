@@ -25,6 +25,7 @@ function JobExecutorAbstract(jobID, jobCollection, jobModel) {
     this._child_process = null;
     this._dataDir = null;
     this._algorithm = null;
+    this._privacyAlgorithm = null;
     this._kill_signal = 'SIGINT';
     this._aggregationStarted = false;
     this._executionChecker = null;
@@ -69,7 +70,7 @@ JobExecutorAbstract.prototype._contactAggregationService = function (event) {
                 data = {
                     aggregationMethod: _this._algorithm.reducer,
                     keySelector: _this._model.params.keySelector,
-                    privacyAlgorithm: _this._algorithm.privacyAlgorithm,
+                    privacyAlgorithm: _this._privacyAlgorithm,
                     params: _this._model.params
                 };
                 _this._aggregationStarted = true;
@@ -223,6 +224,7 @@ JobExecutorAbstract.prototype.fetchAlgorithm = function () {
                     function (response) {
                         if (response.status === 200){
                             _this._algorithm = response.data.item.algorithm;
+                            _this._privacyAlgorithm = response.data.item.privacyAlgorithm;
                             resolve(_this._algorithm);
                         } else {
                             reject(ErrorHelper(response.data));
