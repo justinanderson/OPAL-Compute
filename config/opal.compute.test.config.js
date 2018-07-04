@@ -10,7 +10,7 @@ module.exports = {
     opalAggPrivServiceURL: 'http://aggandprivacy:9001',
     opalalgoSandboxVenv: '/usr/sandbox/venv',
     opalalgoSandboxUser: 'sandbox',
-    maxUsersPerFetch: 50000,
+    maxUsersPerFetch: 10000,
     maxCores: 48,
     randomSeed: 0.42 // should be in [-1, 1]
 };
