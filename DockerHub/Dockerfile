@@ -37,7 +37,7 @@ RUN rm -rf /etc/apparmor.d/docker-engine
 
 # Install python library required
 RUN pip3 install git+https://github.com/OPAL-Project/codejail.git \
-    && pip3 install git+https://github.com/emalgorithm/bandicoot.git \
+    && pip3 install git+https://github.com/OPAL-Project/bandicoot.git \
     && pip3 install git+https://github.com/OPAL-Project/opalalgorithms.git \
     && pip3 install python-dateutil psycopg2 asyncpg
 

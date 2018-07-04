@@ -29,12 +29,15 @@ parser.add_argument('--max_cores', default=multiprocessing.cpu_count() - 2, type
                     help='Max cores to be used for processing')
 parser.add_argument('--max_users_per_fetch', default=3000, type=int,
                     help='Max users to be fetched in per call from db.')
+parser.add_argument('--random_seed', required=True, type=float,
+                    help='Random seed to be set.')
 
 
-def fetch_users(db, start_date, end_date, sample=1):
+def fetch_users(db, start_date, end_date, random_seed, sample=1):
     """Fetch all the users and return sampled users using the sampling."""
     conn = psycopg2.connect(db)
     cur = conn.cursor()
+    cur.execute("SELECT setseed(%s);", [random_seed])
     cur.execute(
         """
         SELECT * FROM (SELECT DISTINCT(emiter_id) FROM public.opal as telecomdata
@@ -163,7 +166,8 @@ if __name__ == "__main__":
     salt = get_salt(16)
     start_date = dateutil.parser.parse(params["startDate"])
     end_date = dateutil.parser.parse(params["endDate"])
-    required_users = fetch_users(args.db, start_date, end_date, params['sample'])
+    required_users = fetch_users(
+        args.db, start_date, end_date, args.random_seed, params['sample'])
 
     num_users = len(required_users)
     # ignoring max_users_per_fetch

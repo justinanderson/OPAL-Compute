@@ -16,7 +16,7 @@ const url = require('url');
  * @param jobModel {Object} Plain js Job model from the mongoDB, optional if fetchModel is called
  * @constructor
  */
-function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
+function JobExecutorAbstract(jobID, jobCollection, jobModel) {
     this._jobID = new ObjectID(jobID);
     this._jobCollection = jobCollection;
     this._model = jobModel;
@@ -25,6 +25,7 @@ function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
     this._child_process = null;
     this._dataDir = null;
     this._algorithm = null;
+    this._privacyAlgorithm = null;
     this._kill_signal = 'SIGINT';
     this._aggregationStarted = false;
     this._executionChecker = null;
@@ -68,7 +69,9 @@ JobExecutorAbstract.prototype._contactAggregationService = function (event) {
             case 'start':
                 data = {
                     aggregationMethod: _this._algorithm.reducer,
-                    keySelector: _this._model.params.keySelector
+                    keySelector: _this._model.params.keySelector,
+                    privacyAlgorithm: _this._privacyAlgorithm,
+                    params: _this._model.params
                 };
                 _this._aggregationStarted = true;
                 break;
@@ -221,6 +224,7 @@ JobExecutorAbstract.prototype.fetchAlgorithm = function () {
                     function (response) {
                         if (response.status === 200){
                             _this._algorithm = response.data.item.algorithm;
+                            _this._privacyAlgorithm = response.data.item.privacyAlgorithm;
                             resolve(_this._algorithm);
                         } else {
                             reject(ErrorHelper(response.data));

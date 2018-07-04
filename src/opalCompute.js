@@ -147,7 +147,7 @@ OpalCompute.prototype._setupStatusController = function () {
 OpalCompute.prototype._setupJobController = function () {
     let _this = this;
 
-    _this.jobController = new JobController(_this.postgresClient, _this.db.collection(Constants.EAE_COLLECTION_JOBS), _this.status_helper);
+    _this.jobController = new JobController(_this.db.collection(Constants.EAE_COLLECTION_JOBS), _this.status_helper);
     _this.app.post('/run', _this.jobController.runJob); // POST run a job from ID
     _this.app.post('/cancel', _this.jobController.cancelJob); // POST cancel current job
 };
