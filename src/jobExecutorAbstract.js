@@ -16,7 +16,7 @@ const url = require('url');
  * @param jobModel {Object} Plain js Job model from the mongoDB, optional if fetchModel is called
  * @constructor
  */
-function JobExecutorAbstract(jobID, postgresClient, jobCollection, jobModel) {
+function JobExecutorAbstract(jobID, jobCollection, jobModel) {
     this._jobID = new ObjectID(jobID);
     this._jobCollection = jobCollection;
     this._model = jobModel;

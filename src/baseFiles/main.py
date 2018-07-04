@@ -37,13 +37,13 @@ def fetch_users(db, start_date, end_date, random_seed, sample=1):
     """Fetch all the users and return sampled users using the sampling."""
     conn = psycopg2.connect(db)
     cur = conn.cursor()
+    cur.execute("SELECT setseed(%s);", (random_seed))
     cur.execute(
         """
-        SELECT setseed(%s);
         SELECT * FROM (SELECT DISTINCT(emiter_id) FROM public.opal as telecomdata
         WHERE telecomdata.event_time >= %s and telecomdata.event_time <= %s) AS usersid ORDER BY random();
         """,
-        (random_seed, start_date, end_date))
+        (start_date, end_date))
     all_users = []
     for row in cur:
         all_users.append(row[0].strip())
