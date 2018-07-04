@@ -2,7 +2,6 @@ const process = require('process');
 const fs = require('fs');
 const path = require('path');
 const fse = require('fs-extra');
-const {Constants} = require('eae-utils');
 
 const JobExecutorAbstract = require('./jobExecutorAbstract.js');
 const { ErrorHelper } = require('eae-utils');
@@ -15,8 +14,8 @@ const { ErrorHelper } = require('eae-utils');
  * @param jobModel {Object} Plain js Job model from the mongoDB, optional if fetchModel is called
  * @constructor
  */
-function JobExecutorPython(jobID, postgresClient, jobCollection, jobModel) {
-    JobExecutorAbstract.call(this, jobID, postgresClient, jobCollection, jobModel);
+function JobExecutorPython(jobID, jobCollection, jobModel) {
+    JobExecutorAbstract.call(this, jobID, jobCollection, jobModel);
     this._tmpDirectory = null;
 
     // Bind member functions
