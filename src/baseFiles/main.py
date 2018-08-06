@@ -63,7 +63,7 @@ async def fetch_data_async(db, start_date, end_date, required_users, salt):
         latitude, longitude, location_level_1, location_level_2,
         duration as call_duration FROM public.opal as telecomdata
         INNER JOIN public.antenna_records as antenna_records
-        ON (telecomdata.antenna_id=antenna_records. id AND
+        ON (telecomdata.antenna_id=antenna_records.id AND
         telecomdata.event_time >= antenna_records.date_from AND
         telecomdata.event_time <= antenna_records.date_to)
         WHERE telecomdata.event_time >= $3 and telecomdata.event_time <= $4 and telecomdata.emiter_id = ANY($5);
