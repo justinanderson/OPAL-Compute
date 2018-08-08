@@ -54,7 +54,7 @@ RUN /bin/bash -c "source /usr/venv/sandbox/bin/activate \
 
 # create a sandbox user
 RUN useradd -ms /bin/bash sandbox
-COPY ./setupScripts/usr.venv.sandbox.bin.python /etc/apparmor.d/
+COPY ./setupScripts/usr.venv.sandbox.bin.python2.7 /etc/apparmor.d/
 
 RUN echo "#!/bin/bash\nsudo mount -tsecurityfs securityfs /sys/kernel/security && sudo apparmor_parser -r -W /etc/apparmor.d/usr.venv.sandbox.bin.python" > /usr/bin/apparmor_init && \
     chmod +x /usr/bin/apparmor_init
