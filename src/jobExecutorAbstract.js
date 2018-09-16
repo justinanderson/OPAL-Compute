@@ -8,6 +8,7 @@ const path = require('path');
 const os = require('os');
 const axios = require('axios');
 const url = require('url');
+const crypto = require('crypto');
 
 /**
  * @class JobExecutorAbstract
@@ -225,6 +226,17 @@ JobExecutorAbstract.prototype.fetchAlgorithm = function () {
                         if (response.status === 200){
                             _this._algorithm = response.data.item.algorithm;
                             _this._privacyAlgorithm = response.data.item.privacyAlgorithm;
+                            // Verify code matches signature and public key
+                            if (global.opal_compute_config.verifySignatures) {
+                                signature = response.data.item.signature;
+                                publicKey = response.data.item.publicKey;
+                                const verify = crypto.createVerify('sha256');
+                                verify.update(_this._algorithm);
+                                verify.update(_this._privacyAlgorithm);
+                                if (!verify.verify(publicKey, signature, 'base64')) {
+                                    reject(ErrorHelper('Failed to verify signature for job ' + _this._jobID.toHexString()));
+                                }
+                            }
                             resolve(_this._algorithm);
                         } else {
                             reject(ErrorHelper(response.data));
